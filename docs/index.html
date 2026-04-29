@@ -7,487 +7,285 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪷</text></svg>">
   <style>
     :root {
-      --lotus-50: #FFF0F5;
-      --lotus-100: #FFE4EE;
-      --lotus-200: #FFC4D8;
-      --lotus-300: #FF9EBE;
-      --lotus-400: #FF7AA4;
-      --lotus-500: #F4548D;
-      --lotus-600: #E63970;
-      --lotus-700: #CC2556;
-      --lotus-800: #A81C43;
-      --lotus-900: #8C1A3D;
-      --lotus-950: #4A0A1E;
-      --lotus-accent: #F8B4C8;
-      --lotus-green: #8BC3A4;
-      --lotus-green-dark: #5F9B7A;
-      --lotus-leaf: #6DAE84;
-      --bg-primary: #FFFBFD;
-      --bg-secondary: #FFF5F8;
-      --bg-card: #FFFFFF;
-      --text-primary: #2D1B22;
-      --text-secondary: #6B4A55;
-      --text-muted: #9B7A87;
+      --pink-50: #FFF5F8;
+      --pink-100: #FFE4EE;
+      --pink-200: #FFC4D8;
+      --pink-300: #FF9EBE;
+      --pink-400: #FF7AA4;
+      --pink-500: #F4548D;
+      --pink-600: #E63970;
+      --pink-700: #CC2556;
+      --pink-800: #A81C43;
+      --pink-900: #4A0A1E;
+      --leaf: #7DAF8A;
+      --leaf-light: #B8D8C4;
+      --bg: #FFFBFD;
+      --text: #2D1B22;
+      --text2: #6B4A55;
+      --text3: #9B7A87;
       --border: #F0D4E0;
-      --border-hover: #E6B8CC;
-      --shadow-sm: 0 1px 3px rgba(204, 37, 86, 0.08);
-      --shadow-md: 0 4px 12px rgba(204, 37, 86, 0.1);
-      --shadow-lg: 0 8px 30px rgba(204, 37, 86, 0.12);
-      --shadow-glow: 0 0 40px rgba(255, 158, 190, 0.3);
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 20px;
-      --radius-xl: 28px;
+      --radius: 16px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       line-height: 1.6;
       min-height: 100vh;
     }
 
-    /* === LOTUS DECORATION === */
-    .lotus-bg {
+    .bg-decor {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       pointer-events: none;
       z-index: 0;
       overflow: hidden;
     }
 
-    .lotus-bg::before {
+    .bg-decor::before {
       content: '';
       position: absolute;
-      top: -200px;
-      right: -200px;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, var(--lotus-100) 0%, transparent 70%);
-      opacity: 0.6;
+      top: -100px;
+      right: -100px;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, var(--pink-100) 0%, transparent 70%);
+      opacity: 0.5;
     }
 
-    .lotus-bg::after {
+    .bg-decor::after {
       content: '';
       position: absolute;
-      bottom: -150px;
-      left: -150px;
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, var(--lotus-green) 0%, transparent 70%);
-      opacity: 0.2;
+      bottom: -100px;
+      left: -100px;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, var(--leaf) 0%, transparent 70%);
+      opacity: 0.15;
     }
 
-    /* === HEADER === */
-    header {
+    .wrap {
       position: relative;
       z-index: 1;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 60px 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
-      padding: 60px 20px 40px;
-      background: linear-gradient(180deg, var(--lotus-50) 0%, var(--bg-primary) 100%);
     }
 
-    .lotus-icon {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 20px;
-      background: linear-gradient(135deg, var(--lotus-400), var(--lotus-600));
+    .logo {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, var(--pink-400), var(--pink-600));
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 40px;
-      box-shadow: var(--shadow-glow);
-      animation: float 3s ease-in-out infinite;
+      font-size: 36px;
+      box-shadow: 0 0 40px rgba(244, 84, 141, 0.3);
+      animation: pulse 3s ease-in-out infinite;
+      margin-bottom: 24px;
     }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(244, 84, 141, 0.3); }
+      50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(244, 84, 141, 0.4); }
     }
 
-    header h1 {
-      font-size: 2.2rem;
+    h1 {
+      font-size: 2rem;
       font-weight: 800;
-      background: linear-gradient(135deg, var(--lotus-700), var(--lotus-500));
+      background: linear-gradient(135deg, var(--pink-700), var(--pink-500));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       margin-bottom: 8px;
     }
 
-    header p {
-      color: var(--text-secondary);
-      font-size: 1.1rem;
-      max-width: 500px;
-      margin: 0 auto;
+    .subtitle {
+      color: var(--text3);
+      font-size: 0.95rem;
+      margin-bottom: 32px;
     }
 
-    /* === BADGE === */
-    .badge-row {
+    /* === MAIN INSTALL BOX === */
+    .install-box {
+      background: var(--pink-900);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 8px 30px rgba(74, 10, 30, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .install-box::before {
+      content: '';
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    }
+
+    .install-label {
+      color: var(--pink-200);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 14px;
+    }
+
+    .cmd-row {
       display: flex;
-      justify-content: center;
+      align-items: center;
       gap: 12px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    .cmd-text {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.88rem;
+      color: var(--pink-100);
+      flex: 1;
+      user-select: all;
+      line-height: 1.6;
+    }
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      background: var(--pink-500);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .copy-btn:hover {
+      background: var(--pink-400);
+      transform: scale(1.05);
+    }
+
+    .copy-btn.copied {
+      background: var(--leaf);
+    }
+
+    /* === BADGES === */
+    .badges {
+      display: flex;
+      gap: 10px;
       flex-wrap: wrap;
-      margin-top: 20px;
+      justify-content: center;
+      margin-top: 24px;
     }
 
     .badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
+      gap: 5px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.06);
       border-radius: 100px;
-      font-size: 0.8rem;
-      color: var(--text-secondary);
+      font-size: 0.75rem;
+      color: var(--pink-200);
       font-weight: 500;
     }
 
     .badge-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--lotus-green);
+      width: 6px;
+      height: 6px;
+      background: var(--leaf);
       border-radius: 50%;
     }
 
-    /* === MAIN CONTAINER === */
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 0 20px 80px;
-    }
-
-    /* === QUICK INSTALL === */
-    .quick-install {
-      background: linear-gradient(135deg, var(--lotus-600), var(--lotus-800));
-      border-radius: var(--radius-xl);
-      padding: 32px;
-      color: white;
-      text-align: center;
-      margin-bottom: 40px;
-      box-shadow: var(--shadow-lg);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .quick-install::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -50%;
+    /* === INFO === */
+    .info {
+      margin-top: 40px;
       width: 100%;
-      height: 100%;
-      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+      max-width: 560px;
     }
 
-    .quick-install h2 {
-      font-size: 1.3rem;
-      font-weight: 700;
-      margin-bottom: 16px;
-      position: relative;
-    }
-
-    .install-cmd-wrapper {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(0,0,0,0.25);
-      border-radius: var(--radius-md);
-      padding: 14px 20px;
-      backdrop-filter: blur(10px);
-    }
-
-    .install-cmd {
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 0.95rem;
-      color: var(--lotus-100);
-      white-space: nowrap;
-      user-select: all;
-    }
-
-    .copy-btn {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: white;
-      padding: 8px 14px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-size: 0.85rem;
-      font-weight: 600;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
-
-    .copy-btn:hover {
-      background: rgba(255,255,255,0.3);
-      transform: scale(1.05);
-    }
-
-    .copy-btn.copied {
-      background: var(--lotus-green);
-    }
-
-    /* === STEPS === */
-    .section-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--lotus-800);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .section-subtitle {
-      color: var(--text-muted);
-      margin-bottom: 24px;
-      font-size: 0.95rem;
-    }
-
-    .steps {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 48px;
-    }
-
-    .step {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      transition: all 0.3s;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .step:hover {
-      border-color: var(--border-hover);
-      box-shadow: var(--shadow-md);
-      transform: translateY(-2px);
-    }
-
-    .step-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 16px;
-    }
-
-    .step-num {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, var(--lotus-400), var(--lotus-600));
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
+    .info p {
+      color: var(--text2);
       font-size: 0.9rem;
-      flex-shrink: 0;
-    }
-
-    .step-title {
-      font-weight: 700;
-      font-size: 1.1rem;
-      color: var(--text-primary);
-    }
-
-    .step-desc {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      margin-bottom: 14px;
-      padding-left: 50px;
-    }
-
-    .cmd-box {
-      background: var(--lotus-950);
-      border-radius: var(--radius-md);
-      padding: 16px 20px;
-      position: relative;
-      margin-top: 10px;
-    }
-
-    .cmd-box code {
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 0.88rem;
-      color: var(--lotus-200);
-      display: block;
-      white-space: pre-wrap;
-      word-break: break-all;
       line-height: 1.7;
-      padding-right: 60px;
     }
 
-    .cmd-box .copy-btn {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      background: rgba(255,255,255,0.1);
-      color: var(--lotus-300);
-      padding: 6px 10px;
-      font-size: 0.78rem;
-    }
-
-    .cmd-box .copy-btn:hover {
-      background: rgba(255,255,255,0.2);
-      color: white;
-    }
-
-    /* === INFO CARDS === */
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 48px;
-    }
-
-    .info-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      text-align: center;
-      transition: all 0.3s;
-    }
-
-    .info-card:hover {
-      border-color: var(--border-hover);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-    }
-
-    .info-icon {
-      font-size: 2rem;
-      margin-bottom: 10px;
-    }
-
-    .info-card h3 {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--lotus-800);
-      margin-bottom: 6px;
-    }
-
-    .info-card p {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    /* === WAYLAND SECTION === */
-    .wayland-section {
-      background: linear-gradient(135deg, var(--lotus-50), var(--bg-secondary));
-      border: 1px solid var(--border);
-      border-radius: var(--radius-xl);
-      padding: 32px;
-      margin-bottom: 48px;
-    }
-
-    .wayland-section h2 {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: var(--lotus-800);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .wayland-section p {
-      color: var(--text-secondary);
-      margin-bottom: 16px;
-    }
-
-    /* === FOOTER === */
-    footer {
-      text-align: center;
-      padding: 40px 20px;
-      border-top: 1px solid var(--border);
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      position: relative;
-      z-index: 1;
-    }
-
-    footer a {
-      color: var(--lotus-600);
+    .info a {
+      color: var(--pink-600);
       text-decoration: none;
       font-weight: 600;
     }
 
-    footer a:hover {
+    .info a:hover {
       text-decoration: underline;
     }
 
-    .footer-links {
-      display: flex;
-      justify-content: center;
-      gap: 24px;
-      margin-top: 12px;
+    .divider {
+      width: 40px;
+      height: 2px;
+      background: var(--border);
+      border-radius: 1px;
+      margin: 24px auto;
     }
 
-    /* === TABS === */
-    .tabs {
-      display: flex;
+    .manual-link {
+      display: inline-flex;
+      align-items: center;
       gap: 8px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-
-    .tab {
-      padding: 10px 20px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      cursor: pointer;
+      color: var(--pink-600);
       font-weight: 600;
       font-size: 0.9rem;
-      color: var(--text-secondary);
       transition: all 0.2s;
     }
 
-    .tab:hover {
-      border-color: var(--lotus-300);
-      color: var(--lotus-700);
+    .manual-link:hover {
+      gap: 12px;
     }
 
-    .tab.active {
-      background: linear-gradient(135deg, var(--lotus-500), var(--lotus-600));
-      color: white;
-      border-color: var(--lotus-600);
+    .manual-link svg {
+      transition: transform 0.2s;
     }
 
-    .tab-content {
-      display: none;
+    .manual-link:hover svg {
+      transform: translateX(2px);
     }
 
-    .tab-content.active {
-      display: block;
+    /* === FOOTER === */
+    footer {
+      margin-top: auto;
+      padding-top: 40px;
+      color: var(--text3);
+      font-size: 0.8rem;
     }
 
-    /* === RESPONSIVE === */
-    @media (max-width: 640px) {
-      header h1 { font-size: 1.7rem; }
-      .quick-install { padding: 24px 20px; }
-      .install-cmd-wrapper { flex-direction: column; width: 100%; }
-      .install-cmd { font-size: 0.8rem; white-space: normal; text-align: center; }
-      .step-desc { padding-left: 0; }
-      .cmd-box code { font-size: 0.8rem; padding-right: 50px; }
+    footer a {
+      color: var(--pink-600);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
     }
 
     /* === TOAST === */
@@ -495,14 +293,14 @@
       position: fixed;
       bottom: 30px;
       left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: var(--lotus-800);
+      transform: translateX(-50%) translateY(80px);
+      background: var(--pink-800);
       color: white;
       padding: 12px 24px;
-      border-radius: var(--radius-md);
+      border-radius: 12px;
       font-weight: 600;
-      font-size: 0.9rem;
-      box-shadow: var(--shadow-lg);
+      font-size: 0.85rem;
+      box-shadow: 0 4px 20px rgba(74, 10, 30, 0.3);
       z-index: 100;
       opacity: 0;
       transition: all 0.3s ease;
@@ -514,557 +312,72 @@
       opacity: 1;
     }
 
-    /* === NIXOS SPECIAL === */
-    .nixos-card {
-      background: linear-gradient(135deg, #2D3748, #1A202C);
-      border: 1px solid #4A5568;
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      margin-top: 16px;
-    }
-
-    .nixos-card h3 {
-      color: #A8D8EA;
-      margin-bottom: 12px;
-    }
-
-    .nixos-card code {
-      color: #E2E8F0;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.85rem;
+    /* === RESPONSIVE === */
+    @media (max-width: 480px) {
+      h1 { font-size: 1.6rem; }
+      .cmd-row { flex-direction: column; text-align: center; }
+      .cmd-text { font-size: 0.78rem; }
+      .install-box { padding: 24px 18px; }
     }
   </style>
 </head>
 <body>
-  <div class="lotus-bg"></div>
+  <div class="bg-decor"></div>
 
-  <header>
-    <div class="lotus-icon">🪷</div>
-    <h1>fcitx5-lotus Installer</h1>
-    <p>Bộ gõ tiếng Việt cho Linux — Cài đặt nhanh, cấu hình tự động</p>
-    <div class="badge-row">
-      <span class="badge"><span class="badge-dot"></span> Arch, Debian, Ubuntu, Fedora, openSUSE, Void</span>
-      <span class="badge">systemd, OpenRC, runit</span>
-      <span class="badge">X11 & Wayland</span>
-    </div>
-  </header>
+  <div class="wrap">
+    <div class="logo">🪷</div>
+    <h1>fcitx5-lotus</h1>
+    <p class="subtitle">Bộ gõ tiếng Việt cho Linux — Cài một lệnh, chạy ngay</p>
 
-  <div class="container">
-
-    <!-- Quick Install -->
-    <div class="quick-install">
-      <h2>⚡ Cài đặt nhanh</h2>
-      <div class="install-cmd-wrapper">
-        <span class="install-cmd">curl -fsSL https://raw.githubusercontent.com/hthienloc/fcitx5-lotus-installer/main/install.sh | sh</span>
-        <button class="copy-btn" onclick="copy(this, 'curl -fsSL https://raw.githubusercontent.com/hthienloc/fcitx5-lotus-installer/main/install.sh | sh')">
+    <div class="install-box">
+      <div class="install-label">Cài đặt nhanh</div>
+      <div class="cmd-row">
+        <span class="cmd-text">curl -fsSL https://raw.githubusercontent.com/hthienloc/fcitx5-lotus-installer/main/install.sh | sh</span>
+        <button class="copy-btn" onclick="doCopy(this)">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="10" height="10" rx="2"/><path d="M6 1h7a2 2 0 012 2v7"/></svg>
           Copy
         </button>
       </div>
-    </div>
-
-    <!-- Supported Distros -->
-    <div class="info-grid">
-      <div class="info-card">
-        <div class="info-icon">🖥️</div>
-        <h3>7 Distros</h3>
-        <p>Arch, Debian, Ubuntu, Fedora, openSUSE, Void Linux, NixOS</p>
-      </div>
-      <div class="info-card">
-        <div class="info-icon">⚙️</div>
-        <h3>3 Init Systems</h3>
-        <p>systemd, OpenRC, runit — tự động phát hiện</p>
-      </div>
-      <div class="info-card">
-        <div class="info-icon">🐚</div>
-        <h3>Bash, Zsh, Fish</h3>
-        <p>Tự cấu hình shell profile phù hợp</p>
-      </div>
-      <div class="info-card">
-        <div class="info-icon">🪷</div>
-        <h3>Auto Setup</h3>
-        <p>uinput, udev, server, autostart — mọi thứ</p>
+      <div class="badges">
+        <span class="badge"><span class="badge-dot"></span> Arch</span>
+        <span class="badge"><span class="badge-dot"></span> Debian</span>
+        <span class="badge"><span class="badge-dot"></span> Ubuntu</span>
+        <span class="badge"><span class="badge-dot"></span> Fedora</span>
+        <span class="badge"><span class="badge-dot"></span> openSUSE</span>
+        <span class="badge"><span class="badge-dot"></span> Void</span>
+        <span class="badge"><span class="badge-dot"></span> NixOS</span>
       </div>
     </div>
 
-    <!-- Installation Steps -->
-    <h2 class="section-title">
-      <span style="font-size: 1.5rem;">📋</span>
-      Hướng dẫn cài đặt theo distro
-    </h2>
-    <p class="section-subtitle">Chọn distro của bạn để xem lệnh cài đặt chi tiết</p>
-
-    <div class="tabs" id="distro-tabs">
-      <div class="tab active" data-tab="arch">Arch</div>
-      <div class="tab" data-tab="debian">Debian</div>
-      <div class="tab" data-tab="ubuntu">Ubuntu</div>
-      <div class="tab" data-tab="fedora">Fedora</div>
-      <div class="tab" data-tab="opensuse">openSUSE</div>
-      <div class="tab" data-tab="void">Void</div>
-      <div class="tab" data-tab="nixos">NixOS</div>
+    <div class="info">
+      <div class="divider"></div>
+      <p>
+        Installer tự động phát hiện distro, cài dependencies, build từ source,
+        cấu hình uinput, server, shell profile và autostart — mọi thứ chạy một lượt.
+      </p>
+      <div class="divider"></div>
+      <p>
+        Cần cài thủ công hoặc tìm hiểu thêm?
+        <br><br>
+        <a href="https://lotusinputmethod.github.io/" target="_blank" class="manual-link">
+          Xem hướng dẫn chính thức
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+        </a>
+      </p>
     </div>
 
-    <!-- Arch -->
-    <div class="tab-content active" id="tab-arch">
-      <div class="steps">
-        <div class="step">
-          <div class="step-header">
-            <div class="step-num">1</div>
-            <div class="step-title">Cài qua AUR (khuyến nghị)</div>
-          </div>
-          <p class="step-desc">Dùng AUR helper để cài package binary</p>
-          <div class="cmd-box">
-            <code>yay -S fcitx5-lotus-bin</code>
-            <button class="copy-btn" onclick="copy(this, 'yay -S fcitx5-lotus-bin')">Copy</button>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-header">
-            <div class="step-num">2</div>
-            <div class="step-title">Build từ source (git)</div>
-          </div>
-          <p class="step-desc">Nếu muốn phiên bản mới nhất từ repo</p>
-          <div class="cmd-box">
-            <code>yay -S fcitx5-lotus-git</code>
-            <button class="copy-btn" onclick="copy(this, 'yay -S fcitx5-lotus-git')">Copy</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Debian -->
-    <div class="tab-content" id="tab-debian">
-      <div class="steps">
-        <div class="step">
-          <div class="step-header">
-            <div class="step-num">1</div>
-            <div class="step-title">Thêm repository</div>
-          </div>
-          <p class="step-desc">Cấu hình APT repo chính thức của fcitx5-lotus</p>
-          <div class="cmd-box">
-            <code>CODENAME=$(grep '^VERSION_CODENAME=' /etc/os-release | cut -d'=' -f2)
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://fcitx5-lotus.pages.dev/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/fcitx5-lotus.gpg
-echo "deb [signed-by=/etc/apt/keyrings/fcitx5-lotus.gpg] https://fcitx5-lotus.pages.dev/apt/$CODENAME $CODENAME main" | sudo tee /etc/apt/sources.list.d/fcitx5-lotus.list</code>
-            <button class="copy-btn" onclick="copy(this, `CODENAME=$(grep '^VERSION_CODENAME=' /etc/os-release | cut -d'=' -f2)
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://fcitx5-lotus.pages.dev/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/fcitx5-lotus.gpg
-echo \"deb [signed-by=/etc/apt/keyrings/fcitx5-lotus.gpg] https://fcitx5-lotus.pages.dev/apt/$CODENAME $CODENAME main\" | sudo tee /etc/apt/sources.list.d/fcitx5-lotus.list`)">Copy</button>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-header">
-            <div class="step-num">2</div>
-            <div class="step-title">Cài đặt</div>
-          </div>
-          <div class="cmd-box">
-            <code>sudo apt update && sudo apt install fcitx5-lotus</code>
-            <button class="copy-btn" onclick="copy(this, 'sudo apt update && sudo apt install fcitx5-lotus')">Copy</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Ubuntu -->
-    <div class="tab-content" id="tab-ubuntu">
-      <div class="steps">
-        <div class="step">
-          <div class="step-header">
-            <div class="step-num">1</div>
-            <div class="step-title">Thêm repository</div>
-          </div>
-          <div class="cmd-box">
-            <code>CODENAME=$(grep '^UBUNTU_CODENAME=' /etc/os-release | cut -d'=' -f2)
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://fcitx5-lotus.pages.dev/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/fcitx5-lotus.gpg
-echo "deb [signed-by=/etc/apt/keyrings/fcitx5-lotus.gpg] https://fcitx5-lotus.pages.dev/apt/$CODENAME $CODENAME main" | sudo tee /etc/apt/sources.list.d/fcitx5-lotus.list</code>
-            <button class="copy-btn" onclick="copy(this, `CODENAME=$(grep '^UBUNTU_CODENAME=' /etc/os-release | cut -d'=' -f2)
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://fcitx5-lotus.pages.dev/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/fcitx5-lotus.gpg
-echo \"deb [signed-by=/etc/apt/keyrings/fcitx5-lotus.gpg] https://fcitx5-lotus.pages.dev/apt/$CODENAME $CODENAME main\" | sudo tee /etc/apt/sources.list.d/fcitx5-lotus.list`)">Copy</button>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-header">
-            <div class="step-num">2</div>
-            <div class="step-title">Cài đặt</div>
-          </div>
-          <div class="cmd-box">
-            <code>sudo apt update && sudo apt install fcitx5-lotus</code>
-            <button class="copy-btn" onclick="copy(this, 'sudo apt update && sudo apt install fcitx5-lotus')">Copy</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Fedora -->
-    <div class="tab-content" id="tab-fedora">
-      <div class="steps">
-        <div class="step">
-          <div class="step-header">
-            <div class="step-num">1</div>
-            <div class="step-title">Thêm repository</div>
-          </div>
-          <div class="cmd-box">
-            <code>RELEASEVER=$(grep '^VERSION_ID=' /etc/os-release | cut -d'=' -f2)
-sudo rpm --import https://fcitx5-lotus.pages.dev/pubkey.gpg
-sudo dnf config-manager addrepo --from-repofile=https://fcitx5-lotus.pages.dev/rpm/fedora/fcitx5-lotus-$RELEASEVER.repo</code>
-            <button class="copy-btn" onclick="copy(this, `RELEASEVER=$(grep '^VERSION_ID=' /etc/os-release | cut -d'=' -f2)
-sudo rpm --import https://fcitx5-lotus.pages.dev/pubkey.gpg
-sudo dnf config-manager addrepo --from-repofile=https://fcitx5-lotus.pages.dev/rpm/fedora/fcitx5-lotus-$RELEASEVER.repo`)">Copy</button>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-header">
-            <div class="step-num">2</div>
-            <div class="step-title">Cài đặt</div>
-          </div>
-          <div class="cmd-box">
-            <code>sudo dnf install fcitx5-lotus</code>
-            <button class="copy-btn" onclick="copy(this, 'sudo dnf install fcitx5-lotus')">Copy</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- openSUSE -->
-    <div class="tab-content" id="tab-opensuse">
-      <div class="steps">
-        <div class="step">
-          <div class="step-header">
-            <div class="step-num">1</div>
-            <div class="step-title">Thêm repository</div>
-          </div>
-          <div class="cmd-box">
-            <code>sudo rpm --import https://fcitx5-lotus.pages.dev/pubkey.gpg
-sudo zypper addrepo https://fcitx5-lotus.pages.dev/rpm/opensuse/fcitx5-lotus-tumbleweed.repo
-sudo zypper refresh</code>
-            <button class="copy-btn" onclick="copy(this, `sudo rpm --import https://fcitx5-lotus.pages.dev/pubkey.gpg
-sudo zypper addrepo https://fcitx5-lotus.pages.dev/rpm/opensuse/fcitx5-lotus-tumbleweed.repo
-sudo zypper refresh`)">Copy</button>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-header">
-            <div class="step-num">2</div>
-            <div class="step-title">Cài đặt</div>
-          </div>
-          <div class="cmd-box">
-            <code>sudo zypper install fcitx5-lotus</code>
-            <button class="copy-btn" onclick="copy(this, 'sudo zypper install fcitx5-lotus')">Copy</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Void Linux -->
-    <div class="tab-content" id="tab-void">
-      <div class="steps">
-        <div class="step">
-          <div class="step-header">
-            <div class="step-num">1</div>
-            <div class="step-title">Cài dependencies</div>
-          </div>
-          <p class="step-desc">Void chưa có package chính thức, cần build từ source</p>
-          <div class="cmd-box">
-            <code>sudo xbps-install -Sy cmake extra-cmake-modules libfcitx5-devel libinput-devel eudev-libudev-devel gcc go gettext-devel pkg-config hicolor-icon-theme libx11-devel</code>
-            <button class="copy-btn" onclick="copy(this, 'sudo xbps-install -Sy cmake extra-cmake-modules libfcitx5-devel libinput-devel eudev-libudev-devel gcc go gettext-devel pkg-config hicolor-icon-theme libx11-devel')">Copy</button>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-header">
-            <div class="step-num">2</div>
-            <div class="step-title">Clone & build</div>
-          </div>
-          <div class="cmd-box">
-            <code>git clone https://github.com/LotusInputMethod/fcitx5-lotus.git
-cd fcitx5-lotus
-mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=/usr/lib -DINSTALL_RUNIT=ON -DRUNIT_SV_DIR=/etc/sv ..
-make
-sudo make install</code>
-            <button class="copy-btn" onclick="copy(this, `git clone https://github.com/LotusInputMethod/fcitx5-lotus.git
-cd fcitx5-lotus
-mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=/usr/lib -DINSTALL_RUNIT=ON -DRUNIT_SV_DIR=/etc/sv ..
-make
-sudo make install`)">Copy</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- NixOS -->
-    <div class="tab-content" id="tab-nixos">
-      <div class="nixos-card">
-        <h3>🐧 NixOS Flake Method</h3>
-        <p style="color: #A0AEC0; margin: 12px 0;">Thêm input vào <code>flake.nix</code>:</p>
-        <div class="cmd-box" style="background: rgba(0,0,0,0.4);">
-          <code>inputs.fcitx5-lotus = {
-  url = "github:LotusInputMethod/fcitx5-lotus";
-  inputs.nixpkgs.follows = "nixpkgs";
-};</code>
-          <button class="copy-btn" onclick="copy(this, `inputs.fcitx5-lotus = {
-  url = \"github:LotusInputMethod/fcitx5-lotus\";
-  inputs.nixpkgs.follows = \"nixpkgs\";
-};`)">Copy</button>
-        </div>
-        <p style="color: #A0AEC0; margin: 20px 0 12px;">Cấu hình trong <code>configuration.nix</code>:</p>
-        <div class="cmd-box" style="background: rgba(0,0,0,0.4);">
-          <code>services.fcitx5-lotus = {
-  enable = true;
-  user = "your_username";
-};</code>
-          <button class="copy-btn" onclick="copy(this, `services.fcitx5-lotus = {
-  enable = true;
-  user = \"your_username\";
-};`)">Copy</button>
-        </div>
-        <p style="color: #A0AEC0; margin: 20px 0 12px;">Rebuild system:</p>
-        <div class="cmd-box" style="background: rgba(0,0,0,0.4);">
-          <code>sudo nixos-rebuild switch</code>
-          <button class="copy-btn" onclick="copy(this, 'sudo nixos-rebuild switch')">Copy</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Post Install -->
-    <h2 class="section-title">
-      <span style="font-size: 1.5rem;">🔧</span>
-      Sau khi cài đặt
-    </h2>
-    <p class="section-subtitle">Các bước cấu hình sau khi cài fcitx5-lotus</p>
-
-    <div class="steps">
-      <div class="step">
-        <div class="step-header">
-          <div class="step-num">1</div>
-          <div class="step-title">Kích hoạt fcitx5-lotus-server</div>
-        </div>
-        <p class="step-desc">Gói .deb/rpm tự động làm bước này. Build from source cần làm thủ công:</p>
-        <div class="cmd-box">
-          <code>sudo systemctl enable --now fcitx5-lotus-server@$(whoami).service</code>
-          <button class="copy-btn" onclick="copy(this, 'sudo systemctl enable --now fcitx5-lotus-server@$(whoami).service')">Copy</button>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-header">
-          <div class="step-num">2</div>
-          <div class="step-title">Thiết lập biến môi trường</div>
-        </div>
-        <p class="step-desc">Thêm vào <code>~/.bash_profile</code> (hoặc <code>~/.zprofile</code> cho Zsh):</p>
-        <div class="cmd-box">
-          <code>export GTK_IM_MODULE=fcitx
-export QT_IM_MODULE=fcitx
-export XMODIFIERS=@im=fcitx
-export SDL_IM_MODULE=fcitx
-export GLFW_IM_MODULE=ibus</code>
-          <button class="copy-btn" onclick="copy(this, 'export GTK_IM_MODULE=fcitx\nexport QT_IM_MODULE=fcitx\nexport XMODIFIERS=@im=fcitx\nexport SDL_IM_MODULE=fcitx\nexport GLFW_IM_MODULE=ibus')">Copy</button>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-header">
-          <div class="step-num">3</div>
-          <div class="step-title">Tắt IBus (nếu có)</div>
-        </div>
-        <p class="step-desc">Tránh xung đột với bộ gõ cũ:</p>
-        <div class="cmd-box">
-          <code>killall ibus-daemon || ibus exit</code>
-          <button class="copy-btn" onclick="copy(this, 'killall ibus-daemon || ibus exit')">Copy</button>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-header">
-          <div class="step-num">4</div>
-          <div class="step-title">Autostart fcitx5</div>
-        </div>
-        <p class="step-desc">Thêm vào DE/WM config:</p>
-        <div class="cmd-box">
-          <code># GNOME / KDE / Xfce / v.v...
-# Dùng Startup Applications để thêm Fcitx 5
-
-# i3: thêm vào ~/.config/i3/config
-exec --no-startup-id fcitx5 -d
-
-# Sway: thêm vào ~/.config/sway/config
-exec --no-startup-id fcitx5 -d
-
-# Hyprland: thêm vào ~/.config/hypr/hyprland.conf
-exec-once = fcitx5 -d</code>
-          <button class="copy-btn" onclick="copy(this, 'exec --no-startup-id fcitx5 -d')">Copy</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Wayland -->
-    <div class="wayland-section">
-      <h2>🪟 Wayland Configuration</h2>
-      <p>Nếu bạn dùng Wayland, cần lưu ý các điểm sau:</p>
-
-      <div class="steps">
-        <div class="step" style="background: var(--bg-card);">
-          <div class="step-header">
-            <div class="step-num" style="background: var(--lotus-green);">K</div>
-            <div class="step-title">KDE Plasma</div>
-          </div>
-          <p class="step-desc">Vào <strong>System Settings</strong> → <strong>Keyboard</strong> → <strong>Virtual Keyboard</strong> → Chọn <strong>Fcitx 5</strong></p>
-        </div>
-        <div class="step" style="background: var(--bg-card);">
-          <div class="step-header">
-            <div class="step-num" style="background: var(--lotus-green);">C</div>
-            <div class="step-title">Chromium / Electron</div>
-          </div>
-          <p class="step-desc">Chạy với flags để bật Wayland IME:</p>
-          <div class="cmd-box">
-            <code>--enable-features=UseOzonePlatform --ozone-platform=wayland --enable-wayland-ime</code>
-            <button class="copy-btn" onclick="copy(this, '--enable-features=UseOzonePlatform --ozone-platform=wayland --enable-wayland-ime')">Copy</button>
-          </div>
-        </div>
-        <div class="step" style="background: var(--bg-card);">
-          <div class="step-header">
-            <div class="step-num" style="background: var(--lotus-green);">!</div>
-            <div class="step-title">Xwayland khuyến nghị</div>
-          </div>
-          <p class="step-desc">Ngay cả khi chỉ dùng Wayland native, bật Xwayland giúp Fcitx hiển thị candidate window đúng vị trí.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Uninstall -->
-    <h2 class="section-title">
-      <span style="font-size: 1.5rem;">🗑️</span>
-      Gỡ cài đặt
-    </h2>
-    <p class="section-subtitle">Nếu cần gỡ fcitx5-lotus khỏi hệ thống</p>
-
-    <div class="tabs" id="uninstall-tabs">
-      <div class="tab active" data-tab="uninstall-arch">Arch</div>
-      <div class="tab" data-tab="uninstall-debian">Debian</div>
-      <div class="tab" data-tab="uninstall-ubuntu">Ubuntu</div>
-      <div class="tab" data-tab="uninstall-fedora">Fedora</div>
-      <div class="tab" data-tab="uninstall-opensuse">openSUSE</div>
-      <div class="tab" data-tab="uninstall-source">Source</div>
-    </div>
-
-    <div class="tab-content active" id="tab-uninstall-arch">
-      <div class="cmd-box">
-        <code>sudo pacman -Rns fcitx5-lotus
-# hoặc với yay/paru:
-yay -Rns fcitx5-lotus
-paru -Rns fcitx5-lotus</code>
-        <button class="copy-btn" onclick="copy(this, 'sudo pacman -Rns fcitx5-lotus')">Copy</button>
-      </div>
-    </div>
-
-    <div class="tab-content" id="tab-uninstall-debian">
-      <div class="cmd-box">
-        <code>sudo apt remove fcitx5-lotus
-sudo rm /etc/apt/sources.list.d/fcitx5-lotus.list
-sudo rm /etc/apt/keyrings/fcitx5-lotus.gpg
-sudo apt update</code>
-        <button class="copy-btn" onclick="copy(this, `sudo apt remove fcitx5-lotus
-sudo rm /etc/apt/sources.list.d/fcitx5-lotus.list
-sudo rm /etc/apt/keyrings/fcitx5-lotus.gpg
-sudo apt update`)">Copy</button>
-      </div>
-    </div>
-
-    <div class="tab-content" id="tab-uninstall-ubuntu">
-      <div class="cmd-box">
-        <code>sudo apt remove fcitx5-lotus
-sudo rm /etc/apt/sources.list.d/fcitx5-lotus.list
-sudo rm /etc/apt/keyrings/fcitx5-lotus.gpg
-sudo apt update</code>
-        <button class="copy-btn" onclick="copy(this, `sudo apt remove fcitx5-lotus
-sudo rm /etc/apt/sources.list.d/fcitx5-lotus.list
-sudo rm /etc/apt/keyrings/fcitx5-lotus.gpg
-sudo apt update`)">Copy</button>
-      </div>
-    </div>
-
-    <div class="tab-content" id="tab-uninstall-fedora">
-      <div class="cmd-box">
-        <code>sudo dnf remove fcitx5-lotus
-sudo rm /etc/yum.repos.d/fcitx5-lotus-*.repo</code>
-        <button class="copy-btn" onclick="copy(this, `sudo dnf remove fcitx5-lotus
-sudo rm /etc/yum.repos.d/fcitx5-lotus-*.repo`)">Copy</button>
-      </div>
-    </div>
-
-    <div class="tab-content" id="tab-uninstall-opensuse">
-      <div class="cmd-box">
-        <code>sudo zypper remove fcitx5-lotus
-sudo zypper removerepo fcitx5-lotus</code>
-        <button class="copy-btn" onclick="copy(this, `sudo zypper remove fcitx5-lotus
-sudo zypper removerepo fcitx5-lotus`)">Copy</button>
-      </div>
-    </div>
-
-    <div class="tab-content" id="tab-uninstall-source">
-      <div class="cmd-box">
-        <code>cd fcitx5-lotus/build
-sudo make uninstall
-# Hoặc cài xargs:
-sudo xargs rm < install_manifest.txt</code>
-        <button class="copy-btn" onclick="copy(this, 'cd fcitx5-lotus/build\nsudo make uninstall')">Copy</button>
-      </div>
-    </div>
-
-    <div class="step" style="margin-top: 20px;">
-      <div class="step-header">
-        <div class="step-num" style="background: var(--text-muted);">🧹</div>
-        <div class="step-title">Dọn dẹp dữ liệu (tuỳ chọn)</div>
-      </div>
-      <div class="cmd-box">
-        <code>rm -rf ~/.local/share/fcitx5/lotus
-rm -rf ~/.config/fcitx5/conf/lotus.conf</code>
-        <button class="copy-btn" onclick="copy(this, `rm -rf ~/.local/share/fcitx5/lotus
-rm -rf ~/.config/fcitx5/conf/lotus.conf`)">Copy</button>
-      </div>
-    </div>
-
+    <footer>
+      <p>Unofficial installer · <a href="https://github.com/hthienloc/fcitx5-lotus-installer" target="_blank">Source</a> · <a href="https://github.com/LotusInputMethod/fcitx5-lotus" target="_blank">fcitx5-lotus</a></p>
+    </footer>
   </div>
-
-  <footer>
-    <p>Unofficial installer for <a href="https://github.com/LotusInputMethod/fcitx5-lotus" target="_blank">fcitx5-lotus</a></p>
-    <p style="margin-top: 6px;">Source: <a href="https://github.com/hthienloc/fcitx5-lotus-installer" target="_blank">github.com/hthienloc/fcitx5-lotus-installer</a></p>
-    <div class="footer-links">
-      <a href="https://lotusinputmethod.github.io/" target="_blank">Official Docs</a>
-      <a href="https://github.com/LotusInputMethod/fcitx5-lotus/issues" target="_blank">Report Bug</a>
-      <a href="https://github.com/hthienloc/fcitx5-lotus-installer" target="_blank">Installer Repo</a>
-    </div>
-  </footer>
 
   <div class="toast" id="toast">✅ Đã copy vào clipboard!</div>
 
   <script>
-    // Tab switching
-    document.querySelectorAll('.tabs').forEach(tabGroup => {
-      tabGroup.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          const parent = tabGroup.parentElement || tabGroup.closest('.container');
-          const targetId = 'tab-' + tab.dataset.tab;
+    const CMD = 'curl -fsSL https://raw.githubusercontent.com/hthienloc/fcitx5-lotus-installer/main/install.sh | sh';
 
-          tabGroup.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-
-          let siblings = [];
-          let current = tabGroup.nextElementSibling;
-          while (current && current.classList.contains('tab-content')) {
-            siblings.push(current);
-            current = current.nextElementSibling;
-          }
-
-          siblings.forEach(s => s.classList.remove('active'));
-          const target = document.getElementById(targetId);
-          if (target) target.classList.add('active');
-        });
-      });
-    });
-
-    // Copy function
-    function copy(btn, text) {
-      navigator.clipboard.writeText(text).then(() => {
+    function doCopy(btn) {
+      navigator.clipboard.writeText(CMD).then(() => {
         btn.classList.add('copied');
         btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l4 4 6-8"/></svg> Copied!';
 
