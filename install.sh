@@ -74,7 +74,7 @@ TEMP_DIR=$(mktemp -d)
 cd "$TEMP_DIR"
 
 git clone --depth 1 -q https://github.com/hthienloc/fcitx5-lotus-installer.git . 2>/dev/null
-go build -q -o lotus-installer ./cmd/installer/
+go build -o lotus-installer ./cmd/installer/ 2>/dev/null
 chmod +x lotus-installer
 
 printf "${GREEN}Running installer...${NC}\n\n"
