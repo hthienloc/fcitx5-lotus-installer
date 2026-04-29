@@ -125,8 +125,11 @@ func prompt(label, def string) string {
 
 func confirm(label string) bool {
 	ans := prompt(label, "Y/n")
+	if ans == "" || ans == "Y/n" || ans == "Y" {
+		return true
+	}
 	l := strings.ToLower(ans)
-	return l == "y" || l == "yes" || ans == "" || ans == "Y"
+	return l == "y" || l == "yes"
 }
 
 func pause() {
