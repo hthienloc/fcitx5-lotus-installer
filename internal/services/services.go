@@ -206,3 +206,29 @@ func (sm *ServiceManager) SetupAllForSource() error {
 
 	return nil
 }
+
+func (sm *ServiceManager) Reload() error {
+	switch sm.Init {
+	case Systemd:
+		out, err := exec.Command("systemctl", "--user", "restart", "fcitx5-lotus-server.service").CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("systemctl restart failed: %s", string(out))
+		}
+	case OpenRC:
+		u, _ := user.Current()
+		svc := "fcitx5-lotus." + u.Username
+		out, err := exec.Command("sudo", "rc-service", svc, "restart").CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("rc-service restart failed: %s", string(out))
+		}
+	case Runit:
+		u, _ := user.Current()
+		out, err := exec.Command("sudo", "sv", "restart", "fcitx5-lotus."+u.Username).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("sv restart failed: %s", string(out))
+		}
+	default:
+		return fmt.Errorf("unsupported init system: %s", sm.Init)
+	}
+	return nil
+}

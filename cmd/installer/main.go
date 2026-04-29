@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -134,6 +135,113 @@ func detectSession() string {
 	return "X11"
 }
 
+type installStatus struct {
+	installed bool
+	method    string
+	version   string
+}
+
+func detectInstall(d distro.DistroInfo) installStatus {
+	_, err := exec.LookPath("fcitx5-lotus")
+	if err != nil {
+		return installStatus{installed: false}
+	}
+
+	var out []byte
+
+	switch d.Type {
+	case distro.Fedora, distro.OpenSUSE:
+		out, _ = exec.Command("rpm", "-q", "--qf", "%{VERSION}-%{RELEASE}", "fcitx5-lotus").CombinedOutput()
+		if len(out) > 0 {
+			return installStatus{installed: true, method: "rpm", version: string(out)}
+		}
+	case distro.Debian, distro.Ubuntu:
+		out, _ = exec.Command("dpkg", "-s", "fcitx5-lotus").CombinedOutput()
+		if len(out) > 0 {
+			return installStatus{installed: true, method: "deb", version: ""}
+		}
+	case distro.Arch:
+		out, _ = exec.Command("pacman", "-Q", "fcitx5-lotus", "fcitx5-lotus-bin", "fcitx5-lotus-git").CombinedOutput()
+		if len(out) > 0 {
+			lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+			for _, l := range lines {
+				if !strings.HasPrefix(l, "error:") {
+					return installStatus{installed: true, method: "aur", version: strings.TrimSpace(l)}
+				}
+			}
+		}
+	}
+
+	out, _ = exec.Command("fcitx5-lotus", "--version").CombinedOutput()
+	if len(out) > 0 {
+		return installStatus{installed: true, method: "source", version: strings.TrimSpace(string(out))}
+	}
+
+	return installStatus{installed: true, method: "source", version: "unknown"}
+}
+
+func uninstall(d distro.DistroInfo, method string) error {
+	fmt.Println("  Removing fcitx5-lotus...")
+
+	switch d.Type {
+	case distro.Fedora, distro.OpenSUSE:
+		cmds := [][]string{
+			{"sudo", "dnf", "remove", "-y", "fcitx5-lotus"},
+			{"sudo", "rm", "-f", "/etc/yum.repos.d/fcitx5-lotus-*.repo"},
+		}
+		for _, args := range cmds {
+			out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
+			if err != nil {
+				return fmt.Errorf("uninstall failed: %s\n%s", err, string(out))
+			}
+		}
+	case distro.Debian, distro.Ubuntu:
+		cmds := [][]string{
+			{"sudo", "apt-get", "remove", "-y", "fcitx5-lotus"},
+			{"sudo", "rm", "-f", "/etc/apt/sources.list.d/fcitx5-lotus.list"},
+			{"sudo", "rm", "-f", "/etc/apt/keyrings/fcitx5-lotus.gpg"},
+		}
+		for _, args := range cmds {
+			out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
+			if err != nil {
+				return fmt.Errorf("uninstall failed: %s\n%s", err, string(out))
+			}
+		}
+	case distro.Arch:
+		helpers := [][]string{
+			{"yay", "-Rns", "--noconfirm", "fcitx5-lotus", "fcitx5-lotus-bin", "fcitx5-lotus-git"},
+			{"paru", "-Rns", "--noconfirm", "fcitx5-lotus", "fcitx5-lotus-bin", "fcitx5-lotus-git"},
+		}
+		for _, args := range helpers {
+			if _, err := exec.LookPath(args[0]); err == nil {
+				out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
+				if err != nil {
+					return fmt.Errorf("uninstall failed: %s\n%s", err, string(out))
+				}
+				break
+			}
+		}
+	default:
+		home, _ := os.UserHomeDir()
+		srcDir := filepath.Join(home, ".cache", "fcitx5-lotus-installer", "fcitx5-lotus")
+		if _, err := os.Stat(srcDir); err == nil {
+			_, err := exec.Command("sudo", "make", "-C", srcDir, "uninstall").CombinedOutput()
+			if err != nil {
+				_ = exec.Command("sudo", "rm", "-f", "/usr/local/bin/fcitx5-lotus").Run()
+				_ = exec.Command("sudo", "rm", "-rf", "/usr/local/share/fcitx5-lotus").Run()
+			} else {
+				_ = exec.Command("sudo", "rm", "-rf", filepath.Join(home, ".cache", "fcitx5-lotus-installer")).Run()
+			}
+		} else {
+			if err := exec.Command("sudo", "rm", "-f", "/usr/local/bin/fcitx5-lotus").Run(); err != nil {
+				return fmt.Errorf("uninstall failed: %s", err)
+			}
+		}
+	}
+
+	return nil
+}
+
 func arch() string {
 	a := runtime.GOARCH
 	if a == "amd64" {
@@ -220,6 +328,67 @@ func main() {
 	if !confirm("Continue with these settings") {
 		fmt.Println("\n  " + dim + "Aborted." + reset)
 		os.Exit(0)
+	}
+
+	status := detectInstall(d)
+
+	if status.installed {
+		fmt.Println()
+		info("fcitx5-lotus is already installed")
+		infoLine("Method:", status.method)
+		if status.version != "" {
+			infoLine("Version:", status.version)
+		}
+		fmt.Println()
+		fmt.Println("  " + dim + "What would you like to do?" + reset)
+		fmt.Println()
+		fmt.Println("  1. Troubleshoot (repair/restart services)")
+		fmt.Println("  2. Uninstall fcitx5-lotus")
+		fmt.Println("  3. Reinstall / Update")
+		fmt.Println("  4. Exit")
+		fmt.Println()
+		choice := prompt("Select action", "1")
+		switch choice {
+		case "2":
+			fmt.Println()
+			if !confirm("Remove fcitx5-lotus") {
+				fmt.Println("\n  " + dim + "Aborted." + reset)
+				os.Exit(0)
+			}
+			fmt.Println()
+			if err := uninstall(d, status.method); err != nil {
+				fail(err.Error())
+				c := ctx(d, initSys, shell, session, "", "uninstall")
+				die("Uninstall failed", err, c)
+			}
+			ok("fcitx5-lotus removed.")
+			fmt.Println("\n  " + dim + "Done." + reset)
+			return
+		case "3":
+			info("Proceeding with reinstall...")
+		case "4":
+			fmt.Println("\n  " + dim + "Done." + reset)
+			return
+		default:
+			sm := services.New(services.InitSystem(initSys), "", session)
+			fmt.Println()
+			info("Restarting fcitx5-lotus services...")
+			fmt.Println()
+			if err := sm.Reload(); err != nil {
+				fail(err.Error())
+				fmt.Println()
+				if confirm("Try full reinstall") {
+					info("Proceeding with reinstall...")
+				} else {
+					fmt.Println("\n  " + dim + "Done." + reset)
+					return
+				}
+			} else {
+				ok("Services restarted.")
+				fmt.Println("\n  " + dim + "Done." + reset)
+				return
+			}
+		}
 	}
 
 	c := ctx(d, initSys, shell, session, "", "start")
