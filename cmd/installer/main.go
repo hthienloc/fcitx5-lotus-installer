@@ -31,9 +31,9 @@ var reader = bufio.NewReader(os.Stdin)
 
 func banner() {
 	fmt.Println()
-	fmt.Println(bold + magenta + "  ╭──────────────────────────────────────────╮" + reset)
-	fmt.Println(bold + magenta + "  │          🪷  fcitx5-lotus Installer        │" + reset)
-	fmt.Println(bold + magenta + "  ╰──────────────────────────────────────────╯" + reset)
+	fmt.Println(dim + "  +--------------------------------------+" + reset)
+	fmt.Printf("  %s|%s %s%s%s\n", dim, reset, bold+magenta+"🪷  fcitx5-lotus Installer"+reset, "               ", dim+"|"+reset)
+	fmt.Println(dim + "  +--------------------------------------+" + reset)
 	fmt.Println()
 }
 
@@ -50,12 +50,15 @@ func box(title string, lines []string) {
 	}
 	w := maxLen + 2
 
-	fmt.Println(dim + "  +" + strings.Repeat("-", w) + "+" + reset)
-	fmt.Printf(dim+"  | "+reset+bold+cyan+"%-"+strconv.Itoa(maxLen)+"s"+reset+dim+" |\n", title)
+	bar := "  +" + strings.Repeat("-", w) + "+"
+	fmt.Println(dim + bar + reset)
+	fmt.Printf("  %s|%s %s %s|%s\n", dim, reset, bold+cyan+title+reset, dim, reset)
 	for _, l := range lines {
-		fmt.Printf(dim+"  | "+reset+"%-"+strconv.Itoa(maxLen)+"s"+dim+" |\n", strings.TrimSpace(l))
+		t := strings.TrimSpace(l)
+		pad := maxLen - len(t)
+		fmt.Printf("  %s|%s %s%s%s%s\n", dim, reset, t, strings.Repeat(" ", pad), dim, reset)
 	}
-	fmt.Println(dim + "  +" + strings.Repeat("-", w) + "+" + reset)
+	fmt.Println(dim + bar + reset)
 	fmt.Println()
 }
 
