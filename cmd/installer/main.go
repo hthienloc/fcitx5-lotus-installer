@@ -663,22 +663,31 @@ func main() {
 	fmt.Println(bold + magenta + "  │           ✅  Installation Done!          │" + reset)
 	fmt.Println(bold + magenta + "  ╰──────────────────────────────────────────╯" + reset)
 	fmt.Println()
-	fmt.Println("  " + bold + "Next steps:" + reset)
-	fmt.Println("    1. Log out and log back in")
-	fmt.Println("    2. Open fcitx5-configtool")
-	fmt.Println("    3. Add 'Lotus' to the left column")
-	fmt.Println("    4. Start typing tiếng Việt!")
-	fmt.Println()
 
 	if session == "Wayland" {
 		fmt.Println("  " + bold + "Wayland notes:" + reset)
 		if de == "KDE Plasma" {
 			fmt.Println("    System Settings → Keyboard → Virtual Keyboard → Fcitx 5")
 		}
-		fmt.Println("    Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland")
 		fmt.Println()
 	}
 
+	fmt.Println()
+	if confirm("Reboot now") {
+		fmt.Println()
+		fmt.Println("  " + dim + "Rebooting..." + reset)
+		fmt.Println()
+		cmd := exec.Command("sudo", "reboot")
+		cmd.Run()
+	}
+
+	fmt.Println()
+	fmt.Println("  " + bold + "Next steps:" + reset)
+	fmt.Println("    1. Log out and log back in (or reboot)")
+	fmt.Println("    2. Open fcitx5-configtool")
+	fmt.Println("    3. Add 'Lotus' to the left column")
+	fmt.Println("    4. Start typing tiếng Việt!")
+	fmt.Println()
 	fmt.Println("  Docs: " + bold + "https://lotusinputmethod.github.io/" + reset)
 	fmt.Println()
 }
