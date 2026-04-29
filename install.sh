@@ -50,7 +50,7 @@ if [ -n "$LATEST_VERSION" ]; then
     if [ -f lotus-installer ]; then
         chmod +x lotus-installer
         printf "${GREEN}Running installer...${NC}\n\n"
-        ./lotus-installer
+        ./lotus-installer < /dev/tty
         cd - >/dev/null
         rm -rf "$TEMP_DIR"
         exit 0
@@ -78,7 +78,7 @@ go build -o lotus-installer ./cmd/installer/ 2>/dev/null
 chmod +x lotus-installer
 
 printf "${GREEN}Running installer...${NC}\n\n"
-./lotus-installer
+./lotus-installer < /dev/tty
 
 cd - >/dev/null
 rm -rf "$TEMP_DIR"
