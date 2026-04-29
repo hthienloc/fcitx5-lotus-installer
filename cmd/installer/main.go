@@ -142,42 +142,43 @@ type installStatus struct {
 }
 
 func detectInstall(d distro.DistroInfo) installStatus {
-	_, err := exec.LookPath("fcitx5-lotus")
-	if err != nil {
-		return installStatus{installed: false}
-	}
-
 	var out []byte
+	var err error
 
 	switch d.Type {
 	case distro.Fedora, distro.OpenSUSE:
-		out, _ = exec.Command("rpm", "-q", "--qf", "%{VERSION}-%{RELEASE}", "fcitx5-lotus").CombinedOutput()
-		if len(out) > 0 {
-			return installStatus{installed: true, method: "rpm", version: string(out)}
+		out, err = exec.Command("rpm", "-q", "--qf", "%{VERSION}-%{RELEASE}", "fcitx5-lotus").CombinedOutput()
+		if err == nil {
+			return installStatus{installed: true, method: "rpm", version: strings.TrimSpace(string(out))}
 		}
 	case distro.Debian, distro.Ubuntu:
-		out, _ = exec.Command("dpkg", "-s", "fcitx5-lotus").CombinedOutput()
-		if len(out) > 0 {
-			return installStatus{installed: true, method: "deb", version: ""}
+		out, err = exec.Command("dpkg", "-s", "fcitx5-lotus").CombinedOutput()
+		if err == nil {
+			return installStatus{installed: true, method: "deb"}
 		}
 	case distro.Arch:
-		out, _ = exec.Command("pacman", "-Q", "fcitx5-lotus", "fcitx5-lotus-bin", "fcitx5-lotus-git").CombinedOutput()
-		if len(out) > 0 {
-			lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-			for _, l := range lines {
-				if !strings.HasPrefix(l, "error:") {
-					return installStatus{installed: true, method: "aur", version: strings.TrimSpace(l)}
-				}
-			}
+		out, err = exec.Command("pacman", "-Q", "fcitx5-lotus").CombinedOutput()
+		if err != nil {
+			out, err = exec.Command("pacman", "-Q", "fcitx5-lotus-bin").CombinedOutput()
+		}
+		if err != nil {
+			out, err = exec.Command("pacman", "-Q", "fcitx5-lotus-git").CombinedOutput()
+		}
+		if err == nil {
+			return installStatus{installed: true, method: "aur", version: strings.TrimSpace(string(out))}
 		}
 	}
 
-	out, _ = exec.Command("fcitx5-lotus", "--version").CombinedOutput()
-	if len(out) > 0 {
-		return installStatus{installed: true, method: "source", version: strings.TrimSpace(string(out))}
+	_, err = exec.LookPath("fcitx5-lotus")
+	if err == nil {
+		out, _ = exec.Command("fcitx5-lotus", "--version").CombinedOutput()
+		if len(out) > 0 {
+			return installStatus{installed: true, method: "source", version: strings.TrimSpace(string(out))}
+		}
+		return installStatus{installed: true, method: "source"}
 	}
 
-	return installStatus{installed: true, method: "source", version: "unknown"}
+	return installStatus{installed: false}
 }
 
 func uninstall(d distro.DistroInfo, method string) error {
