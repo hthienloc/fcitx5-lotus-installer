@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -28,6 +29,53 @@ const (
 )
 
 var reader = bufio.NewReader(os.Stdin)
+
+func die(msg string, err error, context map[string]string) {
+	fmt.Println()
+	fmt.Println(bold + red + "  ✗  " + msg + reset)
+	if err != nil {
+		fmt.Println("  " + red + err.Error() + reset)
+	}
+	fmt.Println()
+	fmt.Println(dim + "  ── Debug Info ──" + reset)
+	fmt.Printf(dim + "    OS:       %s\n" + reset, context["os"])
+	fmt.Printf(dim + "    Arch:     %s\n" + reset, context["arch"])
+	fmt.Printf(dim + "    Init:     %s\n" + reset, context["init"])
+	fmt.Printf(dim + "    Shell:    %s\n" + reset, context["shell"])
+	fmt.Printf(dim + "    Session:  %s\n" + reset, context["session"])
+	fmt.Printf(dim + "    DE:       %s\n" + reset, context["de"])
+	fmt.Printf(dim + "    Step:     %s\n" + reset, context["step"])
+	if detail, ok := context["detail"]; ok {
+		fmt.Printf(dim + "    Detail:   %s\n" + reset, detail)
+	}
+	fmt.Println()
+	fmt.Println(dim + "  Report: https://github.com/hthienloc/fcitx5-lotus-installer/issues" + reset)
+	fmt.Println()
+	os.Exit(1)
+}
+
+func ctx(d distro.DistroInfo, initSys, shell, session, de, step string) map[string]string {
+	return map[string]string{
+		"os":      d.Name + " " + d.Version,
+		"arch":    arch(),
+		"init":    initSys,
+		"shell":   shell,
+		"session": session,
+		"de":      de,
+		"step":    step,
+	}
+}
+
+func arch() string {
+	switch runtime.GOARCH {
+	case "amd64":
+		return "x86_64"
+	case "arm64":
+		return "aarch64"
+	default:
+		return runtime.GOARCH
+	}
+}
 
 func banner() {
 	fmt.Println()
@@ -137,8 +185,7 @@ func main() {
 
 	d, err := distro.Detect()
 	if err != nil {
-		fmt.Println(red + "  Cannot detect OS: " + err.Error() + reset)
-		os.Exit(1)
+		die("Cannot detect OS", err, map[string]string{"step": "detection"})
 	}
 
 	if d.Type == distro.NixOS {
@@ -151,14 +198,13 @@ func main() {
 	}
 
 	if d.Type == distro.Unknown {
-		fmt.Println(red + "  Unsupported distro." + reset)
-		fmt.Println("  " + bold + "https://lotusinputmethod.github.io/" + reset)
-		os.Exit(1)
+		die("Unsupported distro", nil, map[string]string{"step": "detection"})
 	}
 
 	initSys := detectInitSystem()
 	shell := detectShell()
 	session := detectSession()
+	de := ""
 
 	fmt.Println(bold + cyan + "  System Detected" + reset)
 	infoLine("OS:", d.Name+" "+d.Version)
@@ -172,10 +218,14 @@ func main() {
 		os.Exit(0)
 	}
 
+	c := ctx(d, initSys, shell, session, "", "start")
+
 	hasRepo := repo.HasOfficialRepo(d.Type)
 	installMethod := "package"
 
 	step(1, "Install fcitx5-lotus")
+
+	c["step"] = "install"
 
 	if hasRepo {
 		info("Official repository available for " + d.Name)
@@ -185,7 +235,7 @@ func main() {
 			if err := repo.SetupAndInstall(d); err != nil {
 				fail(err.Error())
 				fmt.Println()
-				info("Falling back to source build...")
+				warn("Package install failed, falling back to source build...")
 				installMethod = "source"
 			} else {
 				ok("Installed via package manager.")
@@ -207,7 +257,7 @@ func main() {
 			if err := repo.SetupAndInstall(d); err != nil {
 				fail(err.Error())
 				fmt.Println()
-				info("Falling back to source build...")
+				warn("AUR install failed, falling back to source build...")
 				installMethod = "source"
 			} else {
 				ok("Installed via AUR.")
@@ -239,35 +289,54 @@ func main() {
 		os.MkdirAll(workDir, 0755)
 		b := build.NewBuilder(workDir)
 
+		c["step"] = "build-from-source"
+
 		fmt.Print("  " + dim + "Cloning repository... " + reset)
 		if err := b.Clone(); err != nil {
 			fmt.Println(red + "failed" + reset)
-			fail(err.Error())
-			os.Exit(1)
+			die("Clone failed", err, c)
 		}
 		fmt.Println(green + "done" + reset)
 
 		fmt.Print("  " + dim + "Configuring cmake... " + reset)
 		if err := b.Configure(); err != nil {
 			fmt.Println(red + "failed" + reset)
-			fail(err.Error())
-			os.Exit(1)
+			die("CMake configure failed", err, c)
 		}
 		fmt.Println(green + "done" + reset)
 
 		fmt.Print("  " + dim + "Building... " + reset)
 		if err := b.Build(); err != nil {
 			fmt.Println(red + "failed" + reset)
-			fail(err.Error())
-			os.Exit(1)
+			die("Build failed", err, c)
 		}
 		fmt.Println(green + "done" + reset)
 
 		fmt.Print("  " + dim + "Installing to system... " + reset)
 		if err := b.Install(); err != nil {
 			fmt.Println(red + "failed" + reset)
-			fail(err.Error())
-			os.Exit(1)
+			die("Install failed", err, c)
+		}
+		fmt.Println(green + "done" + reset)
+
+		fmt.Print("  " + dim + "Configuring cmake... " + reset)
+		if err := b.Configure(); err != nil {
+			fmt.Println(red + "failed" + reset)
+			die("CMake configure failed", err, c)
+		}
+		fmt.Println(green + "done" + reset)
+
+		fmt.Print("  " + dim + "Building... " + reset)
+		if err := b.Build(); err != nil {
+			fmt.Println(red + "failed" + reset)
+			die("Build failed", err, c)
+		}
+		fmt.Println(green + "done" + reset)
+
+		fmt.Print("  " + dim + "Installing to system... " + reset)
+		if err := b.Install(); err != nil {
+			fmt.Println(red + "failed" + reset)
+			die("Install failed", err, c)
 		}
 		fmt.Println(green + "done" + reset)
 	}
@@ -285,7 +354,9 @@ func main() {
 	if deIdx < 1 || deIdx > len(des) {
 		deIdx = 1
 	}
-	de := des[deIdx-1]
+	de = des[deIdx-1]
+	c["de"] = de
+	c["step"] = "post-install"
 	ok("Selected: " + de)
 
 	pause()
@@ -352,7 +423,7 @@ func main() {
 	} else {
 		fmt.Println()
 
-		cfg, err := configure.NewConfigurer(
+		cfg, _ := configure.NewConfigurer(
 			configure.ShellType(shell),
 			configure.DesktopEnv(de),
 			configure.SessionEnv(session),
