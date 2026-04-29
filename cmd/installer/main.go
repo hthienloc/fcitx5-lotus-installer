@@ -28,55 +28,6 @@ const (
 	red     = "\033[31m"
 )
 
-var reader = bufio.NewReader(os.Stdin)
-
-func die(msg string, err error, context map[string]string) {
-	fmt.Println()
-	fmt.Println(bold + red + "  ✗  " + msg + reset)
-	if err != nil {
-		fmt.Println("  " + red + err.Error() + reset)
-	}
-	fmt.Println()
-	fmt.Println(dim + "  ── Debug Info ──" + reset)
-	fmt.Printf(dim + "    OS:       %s\n" + reset, context["os"])
-	fmt.Printf(dim + "    Arch:     %s\n" + reset, context["arch"])
-	fmt.Printf(dim + "    Init:     %s\n" + reset, context["init"])
-	fmt.Printf(dim + "    Shell:    %s\n" + reset, context["shell"])
-	fmt.Printf(dim + "    Session:  %s\n" + reset, context["session"])
-	fmt.Printf(dim + "    DE:       %s\n" + reset, context["de"])
-	fmt.Printf(dim + "    Step:     %s\n" + reset, context["step"])
-	if detail, ok := context["detail"]; ok {
-		fmt.Printf(dim + "    Detail:   %s\n" + reset, detail)
-	}
-	fmt.Println()
-	fmt.Println(dim + "  Report: https://github.com/hthienloc/fcitx5-lotus-installer/issues" + reset)
-	fmt.Println()
-	os.Exit(1)
-}
-
-func ctx(d distro.DistroInfo, initSys, shell, session, de, step string) map[string]string {
-	return map[string]string{
-		"os":      d.Name + " " + d.Version,
-		"arch":    arch(),
-		"init":    initSys,
-		"shell":   shell,
-		"session": session,
-		"de":      de,
-		"step":    step,
-	}
-}
-
-func arch() string {
-	switch runtime.GOARCH {
-	case "amd64":
-		return "x86_64"
-	case "arm64":
-		return "aarch64"
-	default:
-		return runtime.GOARCH
-	}
-}
-
 func banner() {
 	fmt.Println()
 	fmt.Println(bold + magenta + "  🪷  fcitx5-lotus Installer" + reset)
@@ -110,22 +61,26 @@ func info(msg string) {
 }
 
 func prompt(label, def string) string {
-	fmt.Print("\n  " + bold + label + reset)
+	fmt.Printf("\n  %s", bold+label+reset)
 	if def != "" {
 		fmt.Printf(" [%s]", dim+def+reset)
 	}
 	fmt.Print(": ")
-	input, _ := reader.ReadString('\n')
-	input = strings.TrimSpace(input)
-	if input == "" && def != "" {
-		return def
+
+	scanner := bufio.NewScanner(os.Stdin)
+	if scanner.Scan() {
+		input := strings.TrimSpace(scanner.Text())
+		if input == "" && def != "" {
+			return def
+		}
+		return input
 	}
-	return input
+	return ""
 }
 
 func confirm(label string) bool {
 	ans := prompt(label, "Y/n")
-	if ans == "" || ans == "Y/n" || ans == "Y" {
+	if ans == "" || ans == "Y/n" {
 		return true
 	}
 	l := strings.ToLower(ans)
@@ -134,7 +89,8 @@ func confirm(label string) bool {
 
 func pause() {
 	fmt.Print("\n  " + dim + "Press Enter to continue" + reset)
-	reader.ReadString('\n')
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
 }
 
 func detectInitSystem() string {
@@ -176,6 +132,53 @@ func detectSession() string {
 		return "Wayland"
 	}
 	return "X11"
+}
+
+func arch() string {
+	a := runtime.GOARCH
+	if a == "amd64" {
+		return "x86_64"
+	}
+	if a == "arm64" {
+		return "aarch64"
+	}
+	return a
+}
+
+func ctx(d distro.DistroInfo, initSys, shell, session, de, step string) map[string]string {
+	return map[string]string{
+		"os":      d.Name + " " + d.Version,
+		"arch":    arch(),
+		"init":    initSys,
+		"shell":   shell,
+		"session": session,
+		"de":      de,
+		"step":    step,
+	}
+}
+
+func die(msg string, err error, c map[string]string) {
+	fmt.Println()
+	fmt.Println(bold + red + "  ✗  " + msg + reset)
+	if err != nil {
+		fmt.Println("  " + red + err.Error() + reset)
+	}
+	fmt.Println()
+	fmt.Println(dim + "  ── Debug Info ──" + reset)
+	fmt.Printf(dim+"    OS:       %s\n"+reset, c["os"])
+	fmt.Printf(dim+"    Arch:     %s\n"+reset, c["arch"])
+	fmt.Printf(dim+"    Init:     %s\n"+reset, c["init"])
+	fmt.Printf(dim+"    Shell:    %s\n"+reset, c["shell"])
+	fmt.Printf(dim+"    Session:  %s\n"+reset, c["session"])
+	fmt.Printf(dim+"    DE:       %s\n"+reset, c["de"])
+	fmt.Printf(dim+"    Step:     %s\n"+reset, c["step"])
+	if det, ok := c["detail"]; ok {
+		fmt.Printf(dim+"    Detail:   %s\n"+reset, det)
+	}
+	fmt.Println()
+	fmt.Println(dim + "  Report: https://github.com/hthienloc/fcitx5-lotus-installer/issues" + reset)
+	fmt.Println()
+	os.Exit(1)
 }
 
 func main() {
