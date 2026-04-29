@@ -187,8 +187,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	banner()
-
 	d, err := distro.Detect()
 	if err != nil {
 		die("Cannot detect OS", err, map[string]string{"step": "detection"})
