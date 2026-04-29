@@ -492,27 +492,6 @@ func main() {
 			die("Install failed", err, c)
 		}
 		fmt.Println(green + "done" + reset)
-
-		fmt.Print("  " + dim + "Configuring cmake... " + reset)
-		if err := b.Configure(); err != nil {
-			fmt.Println(red + "failed" + reset)
-			die("CMake configure failed", err, c)
-		}
-		fmt.Println(green + "done" + reset)
-
-		fmt.Print("  " + dim + "Building... " + reset)
-		if err := b.Build(); err != nil {
-			fmt.Println(red + "failed" + reset)
-			die("Build failed", err, c)
-		}
-		fmt.Println(green + "done" + reset)
-
-		fmt.Print("  " + dim + "Installing to system... " + reset)
-		if err := b.Install(); err != nil {
-			fmt.Println(red + "failed" + reset)
-			die("Install failed", err, c)
-		}
-		fmt.Println(green + "done" + reset)
 	}
 
 	pause()

@@ -40,7 +40,7 @@ LATEST_VERSION=$(curl -sf https://api.github.com/repos/hthienloc/fcitx5-lotus-in
 
 if [ -n "$LATEST_VERSION" ]; then
     printf "${GREEN}Found release ${BOLD}%s${NC}\n" "$LATEST_VERSION"
-    printf "${GREEN}Downloading installer...${NC}\n"
+    printf "${GREEN}Downloading installer...${NC}\n\n"
 
     TEMP_DIR=$(mktemp -d)
     cd "$TEMP_DIR"
@@ -49,7 +49,6 @@ if [ -n "$LATEST_VERSION" ]; then
 
     if [ -f lotus-installer ]; then
         chmod +x lotus-installer
-        printf "${GREEN}Running installer...${NC}\n\n"
         ./lotus-installer < /dev/tty
         cd - >/dev/null
         rm -rf "$TEMP_DIR"
@@ -68,7 +67,7 @@ if ! command -v go &> /dev/null; then
     exit 1
 fi
 
-printf "${GREEN}Go found. Building installer...${NC}\n"
+printf "${GREEN}Go found. Building installer...${NC}\n\n"
 
 TEMP_DIR=$(mktemp -d)
 cd "$TEMP_DIR"
@@ -77,7 +76,6 @@ git clone --depth 1 -q https://github.com/hthienloc/fcitx5-lotus-installer.git .
 go build -o lotus-installer ./cmd/installer/ 2>/dev/null
 chmod +x lotus-installer
 
-printf "${GREEN}Running installer...${NC}\n\n"
 ./lotus-installer < /dev/tty
 
 cd - >/dev/null
