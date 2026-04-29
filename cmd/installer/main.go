@@ -38,20 +38,25 @@ func banner() {
 }
 
 func box(title string, lines []string) {
-	maxLen := len(title)
+	maxLen := 0
 	for _, l := range lines {
+		l = strings.TrimSpace(l)
 		if len(l) > maxLen {
 			maxLen = len(l)
 		}
 	}
-	w := maxLen + 2
-	fmt.Println(dim + "  ┌" + strings.Repeat("─", w) + "┐" + reset)
-	fmt.Printf(dim+"  │ "+reset+bold+cyan+"%s"+reset+dim+strings.Repeat(" ", w-maxLen-1)+"│\n", title)
-	for _, l := range lines {
-		pad := w - len(l) - 1
-		fmt.Printf(dim + "  │ " + reset + "%s" + dim + strings.Repeat(" ", pad) + "│\n", l)
+	if len(title) > maxLen {
+		maxLen = len(title)
 	}
-	fmt.Println(dim + "  └" + strings.Repeat("─", w) + "┘" + reset)
+	w := maxLen + 4
+
+	bar := dim + "  +" + strings.Repeat("-", w) + "+" + reset
+	fmt.Println(bar)
+	fmt.Printf(dim+"  | "+reset+bold+cyan+"%-"+strconv.Itoa(maxLen)+"s"+reset+dim+" |\n", title)
+	for _, l := range lines {
+		fmt.Printf(dim+"  | "+reset+"%-"+strconv.Itoa(maxLen)+"s"+dim+" |\n", strings.TrimSpace(l))
+	}
+	fmt.Println(bar)
 	fmt.Println()
 }
 
@@ -176,10 +181,10 @@ func main() {
 	session := detectSession()
 
 	box("System Detected", []string{
-		"  OS:      " + d.Name + " " + d.Version,
-		"  Init:    " + initSys,
-		"  Shell:   " + shell,
-		"  Session: " + session,
+		"OS:      " + d.Name + " " + d.Version,
+		"Init:    " + initSys,
+		"Shell:   " + shell,
+		"Session: " + session,
 	})
 
 	if !confirm("Continue with these settings") {
