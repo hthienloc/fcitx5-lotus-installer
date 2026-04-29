@@ -11,7 +11,7 @@ import (
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/build"
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/configure"
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/distro"
-	"github.com/hthienloc/fcitx5-lotus-installer/internal/packages"
+	"github.com/hthienloc/fcitx5-lotus-installer/internal/repo"
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/services"
 )
 
@@ -25,7 +25,6 @@ const (
 	magenta = "\033[35m"
 	cyan    = "\033[36m"
 	red     = "\033[31m"
-	bright  = "\033[1;37m"
 )
 
 var reader = bufio.NewReader(os.Stdin)
@@ -39,13 +38,14 @@ func banner() {
 }
 
 func box(title, content string) {
-	fmt.Println(dim + "  ┌" + strings.Repeat("─", 40) + "┐" + reset)
-	fmt.Println(dim + "  │ " + reset + bold + cyan + title + reset + dim)
+	w := 42
+	fmt.Println(dim + "  ┌" + strings.Repeat("─", w) + "┐" + reset)
+	fmt.Printf(dim+"  │ "+reset+bold+cyan+"%s"+reset+dim+"\n", title)
 	lines := strings.Split(content, "\n")
 	for _, line := range lines {
 		fmt.Printf(dim + "  │ " + reset + dim + "%s" + reset + "\n", line)
 	}
-	fmt.Println(dim + "  └" + strings.Repeat("─", 40) + "┘" + reset)
+	fmt.Println(dim + "  └" + strings.Repeat("─", w) + "┘" + reset)
 	fmt.Println()
 }
 
@@ -67,13 +67,16 @@ func fail(msg string) {
 	fmt.Println("  " + red + "✗" + reset + "  " + msg)
 }
 
-func prompt(label string, def string) string {
+func info(msg string) {
+	fmt.Println("  " + cyan + "•" + reset + "  " + msg)
+}
+
+func prompt(label, def string) string {
 	fmt.Printf("\n  %s", bold+label+reset)
 	if def != "" {
 		fmt.Printf(" [" + dim + "%s" + reset + "]", def)
 	}
 	fmt.Printf(": ")
-
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSpace(input)
 	if input == "" && def != "" {
@@ -141,7 +144,7 @@ func main() {
 
 	banner()
 
-	// Step 0: Detect everything silently first
+	// Silent detection
 	d, err := distro.Detect()
 	if err != nil {
 		fmt.Println(red + "  Cannot detect OS: " + err.Error() + reset)
@@ -170,7 +173,8 @@ func main() {
 	shell := detectShell()
 	session := detectSession()
 
-	// Show summary
+	hasRepo := repo.HasOfficialRepo(d.Type)
+
 	content := fmt.Sprintf("  OS:      %s %s\n  Init:    %s\n  Shell:   %s\n  Session: %s",
 		d.Name, d.Version, initSys, shell, session)
 	box("System Detected", content)
@@ -180,48 +184,117 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Step 1: Install method
-	step(1, "Install Method")
-	fmt.Println()
-	fmt.Println("  1. Build from source (recommended for full setup)")
-	fmt.Println("  2. Show package manager commands (manual install)")
+	// Step 1: Install via package manager (preferred)
+	step(1, "Install fcitx5-lotus")
 	fmt.Println()
 
-	method := prompt("  Choice", "1")
+	installMethod := "package"
 
-	if method == "2" {
+	if hasRepo {
+		fmt.Println("  Official repository available for " + d.Name)
 		fmt.Println()
-		fmt.Println(dim + "  ┌" + strings.Repeat("─", 50) + "┐" + reset)
-		fmt.Println(dim + "  │" + reset + "  Run these commands manually:" + dim)
-		fmt.Println(dim + "  │" + reset)
 
-		switch d.Type {
-		case distro.Arch:
-			fmt.Println(dim + "  │" + reset + "    yay -S fcitx5-lotus-bin")
-		case distro.Debian, distro.Ubuntu:
-			fmt.Println(dim + "  │" + reset + "    curl -fsSL https://fcitx5-lotus.pages.dev/pubkey.gpg | \\")
-			fmt.Println(dim + "  │" + reset + "      sudo gpg --dearmor -o /etc/apt/keyrings/fcitx5-lotus.gpg")
-			fmt.Println(dim + "  │" + reset + "    echo \"deb [signed-by=...] https://fcitx5-lotus.pages.dev/apt/...\" | \\")
-			fmt.Println(dim + "  │" + reset + "      sudo tee /etc/apt/sources.list.d/fcitx5-lotus.list")
-			fmt.Println(dim + "  │" + reset + "    sudo apt update && sudo apt install fcitx5-lotus")
-		case distro.Fedora:
-			fmt.Println(dim + "  │" + reset + "    sudo dnf install fcitx5-lotus")
-		case distro.OpenSUSE:
-			fmt.Println(dim + "  │" + reset + "    sudo zypper install fcitx5-lotus")
-		case distro.VoidLinux:
-			fmt.Println(dim + "  │" + reset + "    Void Linux: build from source (no package yet)")
+		if confirm("  Install via package manager (recommended)") {
+			if err := repo.SetupAndInstall(d); err != nil {
+				fail("Package install failed: " + err.Error())
+				fmt.Println()
+				fmt.Println("  Falling back to source build...")
+				installMethod = "source"
+			} else {
+				ok("Installed via package manager.")
+			}
+		} else {
+			fmt.Println()
+			if confirm("  Build from source instead") {
+				installMethod = "source"
+			} else {
+				fmt.Println("\n  " + dim + "Aborted." + reset)
+				os.Exit(0)
+			}
 		}
+	} else if d.Type == distro.Arch {
+		fmt.Println("  AUR package available: fcitx5-lotus-bin")
+		fmt.Println()
 
-		fmt.Println(dim + "  │" + reset)
-		fmt.Println(dim + "  └" + strings.Repeat("─", 50) + "┘" + reset)
-		fmt.Println()
-		fmt.Println("  Full guide: " + bold + "https://lotusinputmethod.github.io/" + reset)
-		fmt.Println()
-		os.Exit(0)
+		if confirm("  Install via AUR helper (yay/paru)") {
+			if err := repo.SetupAndInstall(d); err != nil {
+				fail("AUR install failed: " + err.Error())
+				fmt.Println()
+				fmt.Println("  Falling back to source build...")
+				installMethod = "source"
+			} else {
+				ok("Installed via AUR.")
+			}
+		} else {
+			fmt.Println()
+			if confirm("  Build from source instead") {
+				installMethod = "source"
+			} else {
+				fmt.Println("\n  " + dim + "Aborted." + reset)
+				os.Exit(0)
+			}
+		}
+	} else {
+		fmt.Println("  No official package for " + d.Name)
+		fmt.Println("  Will build from source.")
+		installMethod = "source"
 	}
 
-	// Step 2: Select DE
-	step(2, "Desktop Environment")
+	// Step 2: Source build (if chosen or fallback)
+	if installMethod == "source" {
+		step(2, "Build from Source")
+		fmt.Println()
+
+		if !confirm("  Clone and build fcitx5-lotus") {
+			fmt.Println("\n  " + dim + "Aborted." + reset)
+			os.Exit(0)
+		}
+
+		fmt.Println()
+
+		home, _ := os.UserHomeDir()
+		workDir := filepath.Join(home, ".cache", "fcitx5-lotus-installer")
+		os.MkdirAll(workDir, 0755)
+
+		b := build.NewBuilder(workDir)
+
+		fmt.Print("  " + dim + "Cloning repository... " + reset)
+		if err := b.Clone(); err != nil {
+			fmt.Println(red + "fail" + reset)
+			fail(err.Error())
+			os.Exit(1)
+		}
+		fmt.Println(green + "done" + reset)
+
+		fmt.Print("  " + dim + "Configuring cmake... " + reset)
+		if err := b.Configure(); err != nil {
+			fmt.Println(red + "fail" + reset)
+			fail(err.Error())
+			os.Exit(1)
+		}
+		fmt.Println(green + "done" + reset)
+
+		fmt.Print("  " + dim + "Building... " + reset)
+		if err := b.Build(); err != nil {
+			fmt.Println(red + "fail" + reset)
+			fail(err.Error())
+			os.Exit(1)
+		}
+		fmt.Println(green + "done" + reset)
+
+		fmt.Print("  " + dim + "Installing to system... " + reset)
+		if err := b.Install(); err != nil {
+			fmt.Println(red + "fail" + reset)
+			fail(err.Error())
+			os.Exit(1)
+		}
+		fmt.Println(green + "done" + reset)
+	}
+
+	waitForEnter("  Press Enter to continue")
+
+	// Step 3: Select DE
+	step(3, "Desktop Environment")
 	fmt.Println()
 	des := []string{"GNOME", "KDE Plasma", "Xfce", "Cinnamon", "MATE", "Pantheon", "Budgie", "LXQt", "COSMIC", "i3", "Sway", "Hyprland"}
 	for i, de := range des {
@@ -239,117 +312,15 @@ func main() {
 	fmt.Println()
 	ok("Selected: " + de)
 
-	// Step 3: Dependencies
-	step(3, "Check & Install Dependencies")
-	fmt.Println()
-
-	allDeps := packages.AllDeps(d.Type)
-	var missing []string
-	for _, pkg := range allDeps {
-		if !packages.IsPackageInstalled(pkg, d.Type) {
-			missing = append(missing, pkg)
-		}
-	}
-
-	if len(missing) == 0 {
-		ok("All dependencies satisfied.")
-	} else {
-		fmt.Println("  " + yellow + fmt.Sprintf("%d packages missing:", len(missing)) + reset)
-		for _, pkg := range missing {
-			fmt.Printf("    • %s\n", pkg)
-		}
-		fmt.Println()
-
-		if confirm("  Install these packages") {
-			if err := packages.InstallPackages(missing, d); err != nil {
-				fail("Dependency install failed: " + err.Error())
-				os.Exit(1)
-			}
-			ok("Dependencies installed.")
-		} else {
-			fmt.Println("\n  " + dim + "Aborted." + reset)
-			os.Exit(0)
-		}
-	}
-
 	waitForEnter("  Press Enter to continue")
 
-	// Step 4: Clone
-	step(4, "Clone Source")
+	// Step 4: Post-install services
+	step(4, "Post-install Setup")
 	fmt.Println()
-
-	if confirm("  Clone fcitx5-lotus repository") {
-		home, _ := os.UserHomeDir()
-		workDir := filepath.Join(home, ".cache", "fcitx5-lotus-installer")
-		os.MkdirAll(workDir, 0755)
-
-		b := build.NewBuilder(workDir)
-		if err := b.Clone(); err != nil {
-			fail("Clone failed: " + err.Error())
-			os.Exit(1)
-		}
-		ok("Repository cloned.")
-	} else {
-		fmt.Println("\n  " + dim + "Aborted." + reset)
-		os.Exit(0)
-	}
-
-	waitForEnter("  Press Enter to continue")
-
-	// Step 5: Build
-	step(5, "Build")
-	fmt.Println()
-
-	if confirm("  Run cmake and build") {
-		home, _ := os.UserHomeDir()
-		workDir := filepath.Join(home, ".cache", "fcitx5-lotus-installer")
-		b := build.NewBuilder(workDir)
-
-		if err := b.Configure(); err != nil {
-			fail("Configure failed: " + err.Error())
-			os.Exit(1)
-		}
-		if err := b.Build(); err != nil {
-			fail("Build failed: " + err.Error())
-			os.Exit(1)
-		}
-		ok("Build complete.")
-	} else {
-		fmt.Println("\n  " + dim + "Aborted." + reset)
-		os.Exit(0)
-	}
-
-	waitForEnter("  Press Enter to continue")
-
-	// Step 6: Install to system
-	step(6, "Install to System")
-	fmt.Println()
-
-	if confirm("  Run sudo make install") {
-		home, _ := os.UserHomeDir()
-		workDir := filepath.Join(home, ".cache", "fcitx5-lotus-installer")
-		b := build.NewBuilder(workDir)
-
-		if err := b.Install(); err != nil {
-			fail("Install failed: " + err.Error())
-			os.Exit(1)
-		}
-		ok("Installed to /usr.")
-	} else {
-		fmt.Println("\n  " + dim + "Aborted." + reset)
-		os.Exit(0)
-	}
-
-	waitForEnter("  Press Enter to continue")
-
-	// Step 7: Post-install services
-	step(7, "Post-install Setup")
-	fmt.Println()
-	fmt.Println("  The following will be done:")
-	fmt.Println("    • Create uinput_proxy user/group")
-	fmt.Println("    • Reload udev rules")
-	fmt.Println("    • Load uinput kernel module")
-	fmt.Println("    • Activate fcitx5-lotus-server service")
+	info("Create uinput_proxy user/group")
+	info("Reload udev rules")
+	info("Load uinput kernel module")
+	info("Activate fcitx5-lotus-server service")
 	fmt.Println()
 
 	sm := services.New(
@@ -358,13 +329,15 @@ func main() {
 		session,
 	)
 
-	if confirm("  Run post-install setup") {
+	if !confirm("  Run post-install setup") {
+		fmt.Println("\n  " + dim + "Skipped." + reset)
+	} else {
 		fmt.Println()
 
 		fmt.Print("  " + dim + "Creating uinput_proxy user... " + reset)
 		if err := sm.CreateUserAndGroup(); err != nil {
 			fmt.Println(yellow + "skip" + reset)
-			warn("User creation: " + err.Error())
+			warn(err.Error())
 		} else {
 			fmt.Println(green + "done" + reset)
 		}
@@ -372,7 +345,7 @@ func main() {
 		fmt.Print("  " + dim + "Reloading udev rules... " + reset)
 		if err := sm.ReloadUdev(); err != nil {
 			fmt.Println(yellow + "skip" + reset)
-			warn("Udev reload: " + err.Error())
+			warn(err.Error())
 		} else {
 			fmt.Println(green + "done" + reset)
 		}
@@ -380,7 +353,7 @@ func main() {
 		fmt.Print("  " + dim + "Loading uinput module... " + reset)
 		if err := sm.ModprobeUinput(); err != nil {
 			fmt.Println(yellow + "skip" + reset)
-			warn("Uinput modprobe: " + err.Error())
+			warn(err.Error())
 		} else {
 			fmt.Println(green + "done" + reset)
 		}
@@ -388,7 +361,7 @@ func main() {
 		fmt.Print("  " + dim + "Activating server... " + reset)
 		if err := sm.ActivateServer(); err != nil {
 			fmt.Println(yellow + "skip" + reset)
-			warn("Server activation: " + err.Error())
+			warn(err.Error())
 		} else {
 			fmt.Println(green + "done" + reset)
 		}
@@ -396,22 +369,21 @@ func main() {
 		fmt.Print("  " + dim + "Killing IBus (if running)... " + reset)
 		sm.KillIBus()
 		fmt.Println(green + "done" + reset)
-	} else {
-		fmt.Println("\n  " + dim + "Skipped. You can run these manually later." + reset)
 	}
 
 	waitForEnter("  Press Enter to continue")
 
-	// Step 8: Environment
-	step(8, "Configure Environment")
+	// Step 5: Environment
+	step(5, "Configure Environment")
 	fmt.Println()
-	fmt.Println("  The following will be configured:")
-	fmt.Println("    • Shell profile (" + shell + ")")
-	fmt.Println("    • fcitx5 input method profile")
-	fmt.Println("    • Autostart for " + de)
+	info("Shell profile (" + shell + ")")
+	info("fcitx5 input method profile")
+	info("Autostart for " + de)
 	fmt.Println()
 
-	if confirm("  Apply configuration") {
+	if !confirm("  Apply configuration") {
+		fmt.Println("\n  " + dim + "Skipped." + reset)
+	} else {
 		fmt.Println()
 
 		cfg, err := configure.NewConfigurer(
@@ -420,7 +392,7 @@ func main() {
 			configure.SessionEnv(session),
 		)
 		if err != nil {
-			fail("Config init failed: " + err.Error())
+			fail(err.Error())
 		} else {
 			fmt.Print("  " + dim + "Setting up environment.d... " + reset)
 			if err := cfg.SetupEnvironmentD(); err != nil {
@@ -450,14 +422,12 @@ func main() {
 				fmt.Println(green + "done" + reset)
 			}
 		}
-	} else {
-		fmt.Println("\n  " + dim + "Skipped. You can configure manually." + reset)
 	}
 
 	waitForEnter("  Press Enter to continue")
 
-	// Step 9: Restart fcitx5
-	step(9, "Restart Fcitx5")
+	// Step 6: Restart fcitx5
+	step(6, "Restart Fcitx5")
 	fmt.Println()
 
 	cfg, _ := configure.NewConfigurer(
@@ -469,13 +439,13 @@ func main() {
 	if cfg.CheckFcitx5Running() {
 		if confirm("  Restart fcitx5 now") {
 			if err := cfg.RestartFcitx5(); err != nil {
-				warn("Restart failed. Run manually: fcitx5 -d --replace")
+				warn("Run manually: fcitx5 -d --replace")
 			} else {
 				ok("Fcitx5 restarted.")
 			}
 		}
 	} else {
-		ok("Fcitx5 is not running. Start it with: fcitx5 -d")
+		ok("Fcitx5 not running. Start with: fcitx5 -d")
 	}
 
 	// Done
@@ -496,14 +466,13 @@ func main() {
 		if de == "KDE Plasma" {
 			fmt.Println("    • System Settings → Keyboard → Virtual Keyboard → Fcitx 5")
 		}
-		fmt.Println("    • Chromium flags: --enable-features=UseOzonePlatform --ozone-platform=wayland --enable-wayland-ime")
+		fmt.Println("    • Chromium: --enable-features=UseOzonePlatform --ozone-platform=wayland --enable-wayland-ime")
 		fmt.Println()
 	}
 
 	if initSys != "systemd" && session == "Wayland" {
 		fmt.Println("  " + bold + "Non-systemd note:" + reset)
 		fmt.Println("    • Add DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus")
-		fmt.Println("      to /etc/environment or your DE config")
 		fmt.Println()
 	}
 
