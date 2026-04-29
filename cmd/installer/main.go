@@ -48,15 +48,14 @@ func box(title string, lines []string) {
 	if len(title) > maxLen {
 		maxLen = len(title)
 	}
-	w := maxLen + 4
+	w := maxLen + 2
 
-	bar := dim + "  +" + strings.Repeat("-", w) + "+" + reset
-	fmt.Println(bar)
+	fmt.Println(dim + "  +" + strings.Repeat("-", w) + "+" + reset)
 	fmt.Printf(dim+"  | "+reset+bold+cyan+"%-"+strconv.Itoa(maxLen)+"s"+reset+dim+" |\n", title)
 	for _, l := range lines {
 		fmt.Printf(dim+"  | "+reset+"%-"+strconv.Itoa(maxLen)+"s"+dim+" |\n", strings.TrimSpace(l))
 	}
-	fmt.Println(bar)
+	fmt.Println(dim + "  +" + strings.Repeat("-", w) + "+" + reset)
 	fmt.Println()
 }
 
