@@ -31,35 +31,13 @@ var reader = bufio.NewReader(os.Stdin)
 
 func banner() {
 	fmt.Println()
-	fmt.Println(dim + "  +--------------------------------------+" + reset)
-	fmt.Printf("  %s|%s %s%s%s\n", dim, reset, bold+magenta+"🪷  fcitx5-lotus Installer"+reset, "               ", dim+"|"+reset)
-	fmt.Println(dim + "  +--------------------------------------+" + reset)
+	fmt.Println(bold + magenta + "  🪷  fcitx5-lotus Installer" + reset)
+	fmt.Println(dim + "  ──────────────────────────" + reset)
 	fmt.Println()
 }
 
-func box(title string, lines []string) {
-	maxLen := 0
-	for _, l := range lines {
-		l = strings.TrimSpace(l)
-		if len(l) > maxLen {
-			maxLen = len(l)
-		}
-	}
-	if len(title) > maxLen {
-		maxLen = len(title)
-	}
-	w := maxLen + 2
-
-	bar := "  +" + strings.Repeat("-", w) + "+"
-	fmt.Println(dim + bar + reset)
-	fmt.Printf("  %s|%s %s %s|%s\n", dim, reset, bold+cyan+title+reset, dim, reset)
-	for _, l := range lines {
-		t := strings.TrimSpace(l)
-		pad := maxLen - len(t)
-		fmt.Printf("  %s|%s %s%s%s%s\n", dim, reset, t, strings.Repeat(" ", pad), dim, reset)
-	}
-	fmt.Println(dim + bar + reset)
-	fmt.Println()
+func infoLine(label, value string) {
+	fmt.Println("  " + dim + label + reset + " " + value)
 }
 
 func step(num int, title string) {
@@ -182,12 +160,12 @@ func main() {
 	shell := detectShell()
 	session := detectSession()
 
-	box("System Detected", []string{
-		"OS:      " + d.Name + " " + d.Version,
-		"Init:    " + initSys,
-		"Shell:   " + shell,
-		"Session: " + session,
-	})
+	fmt.Println(bold + cyan + "  System Detected" + reset)
+	infoLine("OS:", d.Name+" "+d.Version)
+	infoLine("Init:", initSys)
+	infoLine("Shell:", shell)
+	infoLine("Session:", session)
+	fmt.Println()
 
 	if !confirm("Continue with these settings") {
 		fmt.Println("\n  " + dim + "Aborted." + reset)
