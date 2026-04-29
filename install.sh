@@ -5,7 +5,6 @@
 
 set -e
 
-# Colors for terminal
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -14,14 +13,14 @@ NC='\033[0m'
 
 echo -e "${BLUE}🪷  Initializing fcitx5-lotus Installer...${NC}"
 
-# 1. Root check
+# Root check
 if [ "$EUID" -eq 0 ]; then
   echo -e "${RED}Error: Please do not run as root.${NC}"
   echo "The installer will ask for sudo when needed."
   exit 1
 fi
 
-# 2. Architecture detection
+# Architecture detection
 ARCH=$(uname -m)
 case $ARCH in
     x86_64)  BINARY_ARCH="amd64" ;;
@@ -29,7 +28,7 @@ case $ARCH in
     *) echo -e "${RED}Unsupported architecture: $ARCH${NC}"; exit 1 ;;
 esac
 
-# 3. OS detection
+# OS detection
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     OS_NAME=$NAME
@@ -37,7 +36,14 @@ if [ -f /etc/os-release ]; then
     echo -e "${BLUE}📋 Detected: $OS_NAME $OS_VERSION ($ARCH)${NC}"
 fi
 
-# 4. Check if Go is available for building from source
+# Check for NixOS
+if [ -f /etc/nix/nix.conf ]; then
+    echo -e "${BLUE}🐧 NixOS detected!${NC}"
+    echo "Please use the flake/module method. See: https://lotusinputmethod.github.io/"
+    exit 1
+fi
+
+# Try building from source if Go is available
 if command -v go &> /dev/null; then
     echo -e "${GREEN}✅ Go found, building installer from source...${NC}"
     TEMP_DIR=$(mktemp -d)
@@ -56,7 +62,7 @@ if command -v go &> /dev/null; then
     fi
 fi
 
-# 5. Fallback: download pre-built binary
+# Fallback: download pre-built binary
 INSTALLER_BIN="/tmp/lotus-installer"
 echo -e "${BLUE}📥 Downloading installer for ${BINARY_ARCH}...${NC}"
 

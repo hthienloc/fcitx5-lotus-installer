@@ -2,7 +2,6 @@ package distro
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strings"
 )
@@ -10,33 +9,36 @@ import (
 type DistroType string
 
 const (
-	Unknown    DistroType = "unknown"
-	Arch       DistroType = "arch"
-	Debian     DistroType = "debian"
-	Ubuntu     DistroType = "ubuntu"
-	Fedora     DistroType = "fedora"
-	OpenSUSE   DistroType = "opensuse"
+	Unknown   DistroType = "unknown"
+	Arch      DistroType = "arch"
+	Debian    DistroType = "debian"
+	Ubuntu    DistroType = "ubuntu"
+	Fedora    DistroType = "fedora"
+	OpenSUSE  DistroType = "opensuse"
+	NixOS     DistroType = "nixos"
+	VoidLinux DistroType = "void"
 )
 
 type DistroInfo struct {
-	Type       DistroType
-	Name       string
-	Version    string
-	IDLike     string
-	PkgManager string
-	InstallCmd string
-	SudoCmd    string
+	Type         DistroType
+	Name         string
+	Version      string
+	IDLike       string
+	PkgManager   string
+	InstallCmd   string
+	RemoveCmd    string
+	SudoCmd      string
 }
 
 func Detect() (DistroInfo, error) {
 	info := DistroInfo{
-		Type:   Unknown,
-		Name:   "Unknown",
+		Type: Unknown,
+		Name: "Unknown",
 	}
 
 	f, err := os.Open("/etc/os-release")
 	if err != nil {
-		return info, fmt.Errorf("cannot detect OS: %w", err)
+		return info, err
 	}
 	defer f.Close()
 
@@ -59,18 +61,23 @@ func Detect() (DistroInfo, error) {
 	}
 
 	if info.Type == Unknown {
-		if strings.Contains(info.IDLike, "arch") {
+		switch {
+		case strings.Contains(info.IDLike, "arch"):
 			info.Type = Arch
-		} else if strings.Contains(info.IDLike, "debian") {
+		case strings.Contains(info.IDLike, "debian"):
 			info.Type = Debian
-		} else if strings.Contains(info.IDLike, "fedora") {
+		case strings.Contains(info.IDLike, "fedora"):
 			info.Type = Fedora
-		} else if strings.Contains(info.IDLike, "suse") {
+		case strings.Contains(info.IDLike, "suse"):
 			info.Type = OpenSUSE
 		}
 	}
 
-	info.PkgManager, info.InstallCmd, info.SudoCmd = getPackageManager(info.Type)
+	if _, err := os.Stat("/etc/nix/nix.conf"); err == nil {
+		info.Type = NixOS
+	}
+
+	info.PkgManager, info.InstallCmd, info.RemoveCmd, info.SudoCmd = getPackageManager(info.Type)
 
 	return info, nil
 }
@@ -87,30 +94,30 @@ func classifyDistro(id string) DistroType {
 		return Fedora
 	case strings.HasPrefix(id, "opensuse"):
 		return OpenSUSE
+	case id == "nixos":
+		return NixOS
+	case id == "void":
+		return VoidLinux
 	default:
 		return Unknown
 	}
 }
 
-func getPackageManager(dt DistroType) (manager, installCmd, sudoCmd string) {
+func getPackageManager(dt DistroType) (manager, installCmd, removeCmd, sudoCmd string) {
 	switch dt {
 	case Arch:
-		return "pacman", "pacman -Sy --noconfirm", "sudo"
+		return "pacman", "pacman -Sy --noconfirm", "pacman -Rns --noconfirm", "sudo"
 	case Debian, Ubuntu:
-		return "apt", "apt-get install -y", "sudo"
+		return "apt", "apt-get install -y", "apt-get remove -y", "sudo"
 	case Fedora:
-		return "dnf", "dnf install -y", "sudo"
+		return "dnf", "dnf install -y", "dnf remove -y", "sudo"
 	case OpenSUSE:
-		return "zypper", "zypper install -y", "sudo"
+		return "zypper", "zypper install -y", "zypper remove -y", "sudo"
+	case VoidLinux:
+		return "xbps", "xbps-install -Sy", "xbps-remove -y", "sudo"
+	case NixOS:
+		return "nix", "", "", ""
 	default:
-		return "", "", ""
+		return "", "", "", ""
 	}
-}
-
-func (d DistroType) String() string {
-	return string(d)
-}
-
-func (d DistroInfo) String() string {
-	return fmt.Sprintf("%s %s (pkg: %s)", d.Name, d.Version, d.PkgManager)
 }

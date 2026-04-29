@@ -1,260 +1,157 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/build"
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/configure"
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/distro"
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/packages"
+	"github.com/hthienloc/fcitx5-lotus-installer/internal/services"
 )
 
-type step int
+type InstallMethod string
 
 const (
-	stepWelcome step = iota
-	stepDetect
-	stepCheckDeps
-	stepInstallDeps
-	stepClone
-	stepBuild
-	stepInstall
-	stepConfigure
-	stepDone
-	stepError
+	PackageManager InstallMethod = "Package Manager"
+	Binary         InstallMethod = "Binary"
+	FromSource     InstallMethod = "Source"
 )
 
-var stepList = []struct {
-	name string
-	s    step
-}{
-	{"Welcome", stepWelcome},
-	{"Detect OS", stepDetect},
-	{"Check Dependencies", stepCheckDeps},
-	{"Install Dependencies", stepInstallDeps},
-	{"Clone Source", stepClone},
-	{"Build", stepBuild},
-	{"Install", stepInstall},
-	{"Configure", stepConfigure},
-	{"Complete", stepDone},
-}
-
-type stepMsg struct {
-	step   step
-	status string
-	err    error
-}
-
-type model struct {
-	currentStep step
-	status      string
-	err         error
-	distro      distro.DistroInfo
-	missingDeps []string
-	workDir     string
-	quitting    bool
-}
-
-func (m model) Init() tea.Cmd {
-	return nil
-}
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "q", "ctrl+c":
-			m.quitting = true
-			return m, tea.Quit
-		case "enter", " ":
-			if m.currentStep == stepWelcome {
-				return m, m.advance()
-			}
-		}
-	case stepMsg:
-		m.currentStep = msg.step
-		m.status = msg.status
-		m.err = msg.err
-		if msg.err != nil {
-			m.currentStep = stepError
-			return m, tea.Quit
-		}
-		if msg.step == stepDone {
-			m.quitting = true
-			return m, tea.Quit
-		}
-		return m, m.advance()
-	}
-	return m, nil
-}
-
-func (m *model) advance() tea.Cmd {
-	return func() tea.Msg {
-		switch m.currentStep {
-		case stepWelcome:
-			return stepMsg{step: stepDetect, status: "Detecting system..."}
-		case stepDetect:
-			return m.runDetect()
-		case stepCheckDeps:
-			return m.runCheckDeps()
-		case stepInstallDeps:
-			return m.runInstallDeps()
-		case stepClone:
-			return m.runClone()
-		case stepBuild:
-			return m.runBuild()
-		case stepInstall:
-			return m.runInstall()
-		case stepConfigure:
-			return m.runConfigure()
-		case stepDone:
-			return stepMsg{step: stepDone, status: "Installation complete!"}
-		}
-		return nil
-	}
-}
-
-func (m *model) runDetect() stepMsg {
-	d, err := distro.Detect()
-	if err != nil {
-		return stepMsg{step: stepError, err: fmt.Errorf("OS detection failed: %w", err)}
-	}
-	m.distro = d
-	return stepMsg{step: stepCheckDeps, status: fmt.Sprintf("Detected: %s", d)}
-}
-
-func (m *model) runCheckDeps() stepMsg {
-	allDeps := packages.AllDeps(m.distro.Type)
-	var missing []string
-	for _, pkg := range allDeps {
-		if !packages.IsPackageInstalled(pkg, m.distro.Type) {
-			missing = append(missing, pkg)
-		}
-	}
-	m.missingDeps = missing
-	if len(missing) == 0 {
-		return stepMsg{step: stepClone, status: "All dependencies satisfied!"}
-	}
-	return stepMsg{step: stepInstallDeps, status: fmt.Sprintf("Found %d missing packages", len(missing))}
-}
-
-func (m *model) runInstallDeps() stepMsg {
-	if len(m.missingDeps) == 0 {
-		return stepMsg{step: stepClone, status: "No dependencies to install"}
-	}
-	err := packages.InstallPackages(m.missingDeps, m.distro)
-	if err != nil {
-		return stepMsg{step: stepError, err: fmt.Errorf("dependency installation failed: %w", err)}
-	}
-	return stepMsg{step: stepClone, status: "Dependencies installed successfully"}
-}
-
-func (m *model) runClone() stepMsg {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return stepMsg{step: stepError, err: fmt.Errorf("cannot get home dir: %w", err)}
-	}
-	m.workDir = filepath.Join(home, ".cache", "fcitx5-lotus-installer")
-	os.MkdirAll(m.workDir, 0755)
-
-	b := build.NewBuilder(m.workDir)
-	if err := b.Clone(); err != nil {
-		return stepMsg{step: stepError, err: fmt.Errorf("clone failed: %w", err)}
-	}
-	return stepMsg{step: stepBuild, status: "Source cloned successfully"}
-}
-
-func (m *model) runBuild() stepMsg {
-	b := build.NewBuilder(m.workDir)
-	if err := b.Configure(); err != nil {
-		return stepMsg{step: stepError, err: fmt.Errorf("cmake configure failed: %w", err)}
-	}
-	if err := b.Build(); err != nil {
-		return stepMsg{step: stepError, err: fmt.Errorf("build failed: %w", err)}
-	}
-	return stepMsg{step: stepInstall, status: "Build completed successfully"}
-}
-
-func (m *model) runInstall() stepMsg {
-	b := build.NewBuilder(m.workDir)
-	if err := b.Install(); err != nil {
-		return stepMsg{step: stepError, err: fmt.Errorf("installation failed: %w", err)}
-	}
-	return stepMsg{step: stepConfigure, status: "Installed to system"}
-}
-
-func (m *model) runConfigure() stepMsg {
-	c, err := configure.NewConfigurer()
-	if err != nil {
-		return stepMsg{step: stepError, err: fmt.Errorf("configurer init failed: %w", err)}
-	}
-	if err := c.ApplyAll(); err != nil {
-		return stepMsg{step: stepError, err: fmt.Errorf("configuration failed: %w", err)}
-	}
-	return stepMsg{step: stepDone, status: "Configuration applied"}
-}
-
-func (m model) View() string {
-	var b strings.Builder
-
-	b.WriteString("\n")
-	b.WriteString("   ======================================\n")
-	b.WriteString("   🪷  fcitx5-lotus Installer  🪷\n")
-	b.WriteString("   ======================================\n\n")
-
-	for _, s := range stepList {
-		prefix := "  "
-		switch {
-		case m.currentStep > s.s:
-			prefix = "✅ "
-		case m.currentStep == s.s:
-			prefix = "🔹 "
-		}
-		b.WriteString(fmt.Sprintf("  %s%s\n", prefix, s.name))
-	}
-
-	b.WriteString("\n")
-
-	if m.status != "" {
-		b.WriteString(fmt.Sprintf("  %s\n", m.status))
-	}
-	if m.err != nil {
-		b.WriteString(fmt.Sprintf("  ❌ Error: %v\n", m.err))
-	}
-
-	if m.currentStep == stepWelcome {
-		b.WriteString("\n  Press Enter to start installation\n")
-	}
-
-	b.WriteString("\n  Press q to quit\n")
-	return b.String()
-}
-
-func runTUI() {
-	m := model{currentStep: stepWelcome}
-	if _, err := tea.NewProgram(m).Run(); err != nil {
-		fmt.Printf("Error: %v\n", err)
+func main() {
+	if os.Geteuid() == 0 {
+		fmt.Println("❌ Error: Please do not run as root.")
+		fmt.Println("   The installer will ask for sudo when needed.")
 		os.Exit(1)
 	}
-}
 
-func runCLI() {
-	fmt.Printf("💻 OS: %s\n", runtime.GOOS)
-	fmt.Printf("🏗️  Arch: %s\n", runtime.GOARCH)
-	fmt.Printf("🔍 Detecting System Environment...\n")
+	reader := bufio.NewReader(os.Stdin)
 
+	fmt.Println("   ╔════════════════════════════════════╗")
+	fmt.Println("   ║   🪷  fcitx5-lotus Installer  🪷   ║")
+	fmt.Println("   ╚════════════════════════════════════╝")
+	fmt.Println()
+
+	fmt.Printf("💻 OS: %s  |  🏗️  Arch: %s\n\n", runtime.GOOS, runtime.GOARCH)
+
+	// Step 1: Detect OS
+	fmt.Println("🔍 Detecting system...")
 	d, err := distro.Detect()
 	if err != nil {
 		fmt.Printf("❌ Failed to detect OS: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("✅ Detected: %s\n\n", d)
+	fmt.Printf("✅ Detected: %s %s\n\n", d.Name, d.Version)
 
+	if d.Type == distro.Unknown {
+		fmt.Println("⚠️  Unsupported or unrecognized distribution.")
+		fmt.Println("   Please install manually following the guide at:")
+		fmt.Println("   https://lotusinputmethod.github.io/")
+		os.Exit(1)
+	}
+
+	if d.Type == distro.NixOS {
+		fmt.Println("🐧 NixOS detected!")
+		fmt.Println("   Please use the flake/module method:")
+		fmt.Println()
+		fmt.Println("   Add to flake.nix:")
+		fmt.Println("   ┌─────────────────────────────────────")
+		fmt.Println("   │ inputs.fcitx5-lotus = {")
+		fmt.Println("   │   url = \"github:LotusInputMethod/fcitx5-lotus\";")
+		fmt.Println("   │   inputs.nixpkgs.follows = \"nixpkgs\";")
+		fmt.Println("   │ };")
+		fmt.Println("   └─────────────────────────────────────")
+		fmt.Println()
+		fmt.Println("   Add to configuration.nix:")
+		fmt.Println("   ┌─────────────────────────────────────")
+		fmt.Println("   │ services.fcitx5-lotus = {")
+		fmt.Println("   │   enable = true;")
+		fmt.Println("   │   user = \"your_username\";")
+		fmt.Println("   │ };")
+		fmt.Println("   └─────────────────────────────────────")
+		fmt.Println()
+		fmt.Println("   Then rebuild: sudo nixos-rebuild switch")
+		os.Exit(0)
+	}
+
+	// Step 2: Detect init system
+	initSys := detectInitSystem()
+	fmt.Printf("⚙️  Init system: %s\n", initSys)
+
+	// Step 3: Detect shell
+	shell := detectShell()
+	fmt.Printf("🐚 Shell: %s\n", shell)
+
+	// Step 4: Select DE
+	de := selectDE(reader)
+	fmt.Printf("🖥️  Desktop: %s\n", de)
+
+	// Step 5: Detect session
+	session := detectSession()
+	fmt.Printf("🪟 Session: %s\n\n", session)
+
+	// Step 6: Select install method
+	method := selectMethod(reader)
+	fmt.Printf("📦 Method: %s\n\n", method)
+
+	// Step 7: Install
+	if method == PackageManager || method == Binary {
+		fmt.Println("📦 Installing via package manager...")
+		fmt.Println()
+		fmt.Println("   Please run the following commands manually:")
+		fmt.Println()
+
+		switch d.Type {
+		case distro.Arch:
+			if method == PackageManager {
+				fmt.Println("   yay -S fcitx5-lotus-bin")
+			} else {
+				fmt.Println("   Arch recommends using AUR for binary installation")
+			}
+		case distro.Debian, distro.Ubuntu:
+			if method == PackageManager {
+				fmt.Println("   curl -fsSL https://fcitx5-lotus.pages.dev/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/fcitx5-lotus.gpg")
+				fmt.Printf("   echo \"deb [signed-by=/etc/apt/keyrings/fcitx5-lotus.gpg] https://fcitx5-lotus.pages.dev/apt/%s %s main\" | sudo tee /etc/apt/sources.list.d/fcitx5-lotus.list\n", d.Version, d.Version)
+				fmt.Println("   sudo apt update && sudo apt install fcitx5-lotus")
+			} else {
+				fmt.Println("   sudo dpkg -i fcitx5-lotus_*.deb")
+			}
+		case distro.Fedora:
+			if method == PackageManager {
+				fmt.Printf("   sudo dnf config-manager addrepo --from-repofile=https://fcitx5-lotus.pages.dev/rpm/fedora/fcitx5-lotus-%s.repo\n", d.Version)
+				fmt.Println("   sudo dnf install fcitx5-lotus")
+			} else {
+				fmt.Println("   sudo rpm -i fcitx5-lotus-*.rpm")
+			}
+		case distro.OpenSUSE:
+			if method == PackageManager {
+				fmt.Println("   sudo zypper addrepo https://fcitx5-lotus.pages.dev/rpm/opensuse/fcitx5-lotus-tumbleweed.repo")
+				fmt.Println("   sudo zypper refresh")
+				fmt.Println("   sudo zypper install fcitx5-lotus")
+			} else {
+				fmt.Println("   sudo rpm -i fcitx5-lotus-*.rpm")
+			}
+		case distro.VoidLinux:
+			fmt.Println("   Void Linux does not have official packages yet.")
+			fmt.Println("   Please build from source.")
+		}
+
+		fmt.Println()
+		fmt.Println("   After installing, run the post-install configuration:")
+		fmt.Println("   📦 fcitx5-lotus-installer --configure")
+		os.Exit(0)
+	}
+
+	// FromSource flow
+	fmt.Println("📦 Build from source selected\n")
+
+	// Step 8: Check & install deps
 	fmt.Println("📦 Checking dependencies...")
 	allDeps := packages.AllDeps(d.Type)
 	var missing []string
@@ -265,8 +162,8 @@ func runCLI() {
 	}
 
 	if len(missing) > 0 {
-		fmt.Printf("⚠️  Missing %d packages: %v\n", len(missing), missing)
-		fmt.Printf("📥 Installing dependencies...\n")
+		fmt.Printf("⚠️  Missing %d packages\n", len(missing))
+		fmt.Println("📥 Installing dependencies...")
 		if err := packages.InstallPackages(missing, d); err != nil {
 			fmt.Printf("❌ Failed to install dependencies: %v\n", err)
 			os.Exit(1)
@@ -276,6 +173,7 @@ func runCLI() {
 		fmt.Println("✅ All dependencies satisfied\n")
 	}
 
+	// Step 9: Clone
 	home, _ := os.UserHomeDir()
 	workDir := filepath.Join(home, ".cache", "fcitx5-lotus-installer")
 	os.MkdirAll(workDir, 0755)
@@ -288,6 +186,7 @@ func runCLI() {
 		os.Exit(1)
 	}
 
+	// Step 10: Configure & Build
 	fmt.Println("🔨 Configuring...")
 	if err := b.Configure(); err != nil {
 		fmt.Printf("❌ Configure failed: %v\n", err)
@@ -300,51 +199,206 @@ func runCLI() {
 		os.Exit(1)
 	}
 
-	fmt.Println("📤 Installing...")
+	fmt.Println("📤 Installing to system...")
 	if err := b.Install(); err != nil {
 		fmt.Printf("❌ Install failed: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Println("⚙️  Configuring environment...")
-	cfg, err := configure.NewConfigurer()
+	// Step 11: Post-install services
+	fmt.Println()
+	fmt.Println("🔧 Post-install configuration...")
+
+	sm := services.New(
+		services.InitSystem(initSys),
+		string(configure.DesktopEnv(de)),
+		string(configure.SessionEnv(session)),
+	)
+
+	fmt.Println("[1/4] Creating uinput_proxy user...")
+	if err := sm.CreateUserAndGroup(); err != nil {
+		fmt.Printf("⚠️  User creation warning: %v\n", err)
+	}
+
+	fmt.Println("[2/4] Reloading udev rules...")
+	if err := sm.ReloadUdev(); err != nil {
+		fmt.Printf("⚠️  Udev reload warning: %v\n", err)
+	}
+
+	fmt.Println("[3/4] Loading uinput module...")
+	if err := sm.ModprobeUinput(); err != nil {
+		fmt.Printf("⚠️  Uinput modprobe warning: %v\n", err)
+	}
+
+	fmt.Println("[4/4] Activating fcitx5-lotus-server...")
+	if err := sm.ActivateServer(); err != nil {
+		fmt.Printf("⚠️  Server activation warning: %v\n", err)
+	}
+
+	// Step 12: Kill IBus
+	fmt.Println()
+	fmt.Println("🔄 Checking for IBus...")
+	sm.KillIBus()
+
+	// Step 13: Configure environment
+	fmt.Println()
+	fmt.Println("⚙️  Setting up environment...")
+
+	shellType := configure.ShellType(shell)
+	deType := configure.DesktopEnv(de)
+	sessionType := configure.SessionEnv(session)
+
+	cfg, err := configure.NewConfigurer(shellType, deType, sessionType)
 	if err != nil {
 		fmt.Printf("❌ Config failed: %v\n", err)
 		os.Exit(1)
 	}
+
 	if err := cfg.ApplyAll(); err != nil {
 		fmt.Printf("⚠️  Configuration warning: %v\n", err)
 	}
 
+	// Step 14: Restart fcitx5
 	if cfg.CheckFcitx5Running() {
 		fmt.Println("🔄 Restarting fcitx5...")
 		if err := cfg.RestartFcitx5(); err != nil {
 			fmt.Printf("⚠️  Could not restart fcitx5: %v\n", err)
-			fmt.Println("   Please restart fcitx5 manually: fcitx5 -d --replace")
+			fmt.Println("   Manual: fcitx5 -d --replace")
 		}
 	}
 
-	fmt.Println("\n✅ Installation complete!")
-	fmt.Println("\n📝 Next steps:")
+	// Summary
+	fmt.Println()
+	fmt.Println("   ╔════════════════════════════════════╗")
+	fmt.Println("   ║   ✅ Installation Complete!  ✅    ║")
+	fmt.Println("   ╚════════════════════════════════════╝")
+	fmt.Println()
+	fmt.Println("📝 Next steps:")
 	fmt.Println("  1. Log out and log back in (or restart)")
-	fmt.Println("  2. Add 'Lotus' input method in fcitx5 config")
-	fmt.Println("  3. Start typing!")
-	fmt.Println("\n🔧 Manual restart: fcitx5 -d --replace")
-	fmt.Println("📖 Docs: https://lotusinputmethod.github.io/")
+	fmt.Println("  2. Open fcitx5-configtool")
+	fmt.Println("  3. Add 'Lotus' input method to the left column")
+	fmt.Println("  4. Start typing tiếng Việt!")
+
+	// DE-specific tips
+	if session == "Wayland" {
+		fmt.Println()
+		fmt.Println("🪟 Wayland notes:")
+		if de == "KDE Plasma" {
+			fmt.Println("  • Go to System Settings → Keyboard → Virtual Keyboard → Select Fcitx 5")
+		}
+		fmt.Println("  • Chromium/Electron flags:")
+		fmt.Printf("    %s\n", sm.ChromiumWaylandFlags())
+	}
+
+	if initSys != "systemd" {
+		fmt.Println()
+		fmt.Println("⚠️  Non-systemd notes:")
+		if session == "Wayland" {
+			fmt.Println("  • Add to /etc/environment or DE config:")
+			fmt.Println("    DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus")
+		}
+	}
+
+	fmt.Println()
+	fmt.Println("🔧 Troubleshooting:")
+	fmt.Println("  • Restart fcitx5: fcitx5 -d --replace")
+	fmt.Println("  • Check status: fcitx5-diagnose")
+	fmt.Println("  • Docs: https://lotusinputmethod.github.io/")
 
 	b.Cleanup()
 }
 
-func main() {
-	if os.Geteuid() == 0 {
-		fmt.Println("❌ Error: Please do not run as root.")
-		fmt.Println("   The installer will ask for sudo when needed.")
-		os.Exit(1)
+func detectInitSystem() string {
+	if _, err := os.Stat("/run/systemd/system"); err == nil {
+		return "systemd"
+	}
+	if _, err := os.Stat("/etc/init.d"); err == nil {
+		if _, err2 := os.Stat("/etc/rc.conf"); err2 == nil {
+			return "openrc"
+		}
+	}
+	if _, err := os.Stat("/etc/sv"); err == nil {
+		return "runit"
+	}
+	if _, err := os.Stat("/etc/runit/sv"); err == nil {
+		return "runit"
+	}
+	return "systemd"
+}
+
+func detectShell() string {
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		return "bash"
+	}
+	if strings.Contains(shell, "zsh") {
+		return "zsh"
+	}
+	if strings.Contains(shell, "fish") {
+		return "fish"
+	}
+	return "bash"
+}
+
+func selectDE(reader *bufio.Reader) string {
+	des := []string{
+		"GNOME", "KDE Plasma", "Xfce", "Cinnamon", "MATE",
+		"Pantheon", "Budgie", "LXQt", "COSMIC", "i3", "Sway", "Hyprland",
 	}
 
-	if len(os.Args) > 1 && os.Args[1] == "--cli" {
-		runCLI()
-	} else {
-		runTUI()
+	fmt.Println("🖥️  Select your Desktop Environment / WM:")
+	for i, de := range des {
+		fmt.Printf("  %d. %s\n", i+1, de)
+	}
+	fmt.Print("\nChoice [1]: ")
+
+	input, _ := reader.ReadString('\n')
+	input = strings.TrimSpace(input)
+	if input == "" {
+		return "GNOME"
+	}
+
+	idx, err := strconv.Atoi(input)
+	if err != nil || idx < 1 || idx > len(des) {
+		return "GNOME"
+	}
+	return des[idx-1]
+}
+
+func detectSession() string {
+	xdgSession := os.Getenv("XDG_SESSION_TYPE")
+	if xdgSession == "wayland" {
+		return "Wayland"
+	}
+	if xdgSession == "x11" {
+		return "X11"
+	}
+
+	// Fallback checks
+	if os.Getenv("WAYLAND_DISPLAY") != "" {
+		return "Wayland"
+	}
+	if os.Getenv("DISPLAY") != "" {
+		return "X11"
+	}
+
+	return "X11"
+}
+
+func selectMethod(reader *bufio.Reader) InstallMethod {
+	fmt.Println()
+	fmt.Println("📦 Select install method:")
+	fmt.Println("  1. Package Manager (recommended)")
+	fmt.Println("  2. Build from Source")
+	fmt.Print("\nChoice [1]: ")
+
+	input, _ := reader.ReadString('\n')
+	input = strings.TrimSpace(input)
+
+	switch input {
+	case "2":
+		return FromSource
+	default:
+		return PackageManager
 	}
 }

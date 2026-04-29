@@ -9,10 +9,10 @@ import (
 )
 
 type Deps struct {
-	Base        []string
-	Fcitx5Dev   []string
-	BuildTools  []string
-	GoDeps      []string
+	Base       []string
+	Fcitx5Dev  []string
+	BuildTools []string
+	GoDeps     []string
 }
 
 func GetBuildDeps(dt distro.DistroType) Deps {
@@ -45,13 +45,26 @@ func GetBuildDeps(dt distro.DistroType) Deps {
 			BuildTools: []string{"git", "cmake", "make", "gcc", "gcc-c++"},
 			GoDeps:     []string{"go"},
 		}
+	case distro.VoidLinux:
+		return Deps{
+			Base:       []string{"base-devel", "cmake", "extra-cmake-modules", "golang", "pkg-config", "hicolor-icon-theme"},
+			Fcitx5Dev:  []string{"libfcitx5-devel", "libinput-devel", "eudev-libudev-devel", "libx11-devel"},
+			BuildTools: []string{"git", "cmake", "make", "gcc", "gcc-c++", "gettext-devel"},
+			GoDeps:     []string{"go"},
+		}
+	case distro.NixOS:
+		return Deps{}
 	default:
 		return Deps{}
 	}
 }
 
 func AllDeps(dt distro.DistroType) []string {
-	deps := GetBuildDeps(dt)
+	dtNormalized := dt
+	if dtNormalized == distro.NixOS {
+		return nil
+	}
+	deps := GetBuildDeps(dtNormalized)
 	all := append(deps.Base, deps.Fcitx5Dev...)
 	all = append(all, deps.BuildTools...)
 	all = append(all, deps.GoDeps...)
@@ -86,6 +99,8 @@ func IsPackageInstalled(pkg string, dt distro.DistroType) bool {
 		cmd = exec.Command("rpm", "-q", pkg)
 	case distro.OpenSUSE:
 		cmd = exec.Command("rpm", "-q", pkg)
+	case distro.VoidLinux:
+		cmd = exec.Command("xbps-query", pkg)
 	default:
 		return false
 	}
@@ -107,7 +122,7 @@ func InstallPackages(packages []string, d distro.DistroInfo) error {
 	args := strings.Fields(d.InstallCmd)
 	args = append(args, packages...)
 
-	cmd := exec.Command("sudo", args...)
+	cmd := exec.Command(d.SudoCmd, args...)
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 
@@ -115,6 +130,21 @@ func InstallPackages(packages []string, d distro.DistroInfo) error {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to install packages: %s\n%s", err, string(out))
+	}
+	return nil
+}
+
+func RemovePackage(pkg string, d distro.DistroInfo) error {
+	args := strings.Fields(d.RemoveCmd)
+	args = append(args, pkg)
+
+	cmd := exec.Command(d.SudoCmd, args...)
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to remove package: %s\n%s", err, string(out))
 	}
 	return nil
 }
