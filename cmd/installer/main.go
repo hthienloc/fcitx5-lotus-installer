@@ -661,16 +661,6 @@ func main() {
 		fmt.Println()
 	}
 
-	fmt.Println()
-	if confirm("Reboot now") {
-		fmt.Println()
-		fmt.Println("  " + dim + "Rebooting..." + reset)
-		fmt.Println()
-		cmd := exec.Command("sudo", "reboot")
-		cmd.Run()
-	}
-
-	fmt.Println()
 	fmt.Println("  " + bold + "Next steps:" + reset)
 	fmt.Println("    1. Log out and log back in (or reboot)")
 	fmt.Println("    2. Open fcitx5-configtool")
@@ -679,4 +669,16 @@ func main() {
 	fmt.Println()
 	fmt.Println("  Docs: " + bold + "https://lotusinputmethod.github.io/" + reset)
 	fmt.Println()
+
+	fmt.Println(yellow + "  Note: Some environment changes require a logout or reboot to take effect." + reset)
+	if confirm("Reboot system now") {
+		fmt.Println()
+		fmt.Println("  " + dim + "Rebooting..." + reset)
+		fmt.Println()
+		cmd := exec.Command("sudo", "reboot")
+		cmd.Run()
+	} else {
+		fmt.Println("\n  " + dim + "Please remember to log out or reboot later." + reset)
+		fmt.Println("  " + bold + "Done." + reset)
+	}
 }
