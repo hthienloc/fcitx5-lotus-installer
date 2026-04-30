@@ -74,9 +74,19 @@ func installApt(d distro.DistroInfo) error {
 func installDnf(d distro.DistroInfo) error {
 	fmt.Println("  Adding fcitx5-lotus repository...")
 
+	repoFile := fmt.Sprintf("fcitx5-lotus-%s.repo", d.Version)
+	repoURL := fmt.Sprintf("%s/rpm/fedora/%s", baseURL, repoFile)
+
+	// Check if the versioned repo file exists and is not an HTML page
+	checkCmd := fmt.Sprintf("curl -sSfL -I %s 2>/dev/null | grep -q 'Content-Type: text/plain' || curl -sSfL -I %s 2>/dev/null | grep -q 'application/octet-stream' || curl -sSfL -I %s 2>/dev/null | grep -v -q 'text/html'", repoURL, repoURL, repoURL)
+	if err := exec.Command("bash", "-c", checkCmd).Run(); err != nil {
+		fmt.Println("  Versioned repo not found, falling back to rawhide...")
+		repoURL = fmt.Sprintf("%s/rpm/fedora/fcitx5-lotus-rawhide.repo", baseURL)
+	}
+
 	cmds := [][]string{
 		{"bash", "-c", fmt.Sprintf("sudo rpm --import %s", pubKeyURL)},
-		{"bash", "-c", fmt.Sprintf("sudo dnf config-manager addrepo --from-repofile=%s/rpm/fedora/fcitx5-lotus-%s.repo", baseURL, d.Version)},
+		{"bash", "-c", fmt.Sprintf("sudo dnf config-manager addrepo --from-repofile=%s", repoURL)},
 		{"sudo", "dnf", "install", "-y", "fcitx5-lotus"},
 	}
 

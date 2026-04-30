@@ -38,12 +38,19 @@ func NewBuilder(workDir string) *Builder {
 
 func (b *Builder) Clone() error {
 	if _, err := os.Stat(b.SourceDir); err == nil {
-		fmt.Println("Source directory already exists, skipping clone")
-		return nil
+		fmt.Println("Source directory already exists, ensuring submodules are up to date...")
+		return b.UpdateSubmodules()
 	}
 
 	fmt.Println("Cloning fcitx5-lotus repository...")
-	cmd := exec.Command("git", "clone", "--depth", "1", RepoURL, b.SourceDir)
+	cmd := exec.Command("git", "clone", "--depth", "1", "--recursive", RepoURL, b.SourceDir)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func (b *Builder) UpdateSubmodules() error {
+	cmd := exec.Command("git", "-C", b.SourceDir, "submodule", "update", "--init", "--recursive")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
