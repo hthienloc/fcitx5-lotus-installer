@@ -210,7 +210,8 @@ func (sm *ServiceManager) SetupAllForSource() error {
 func (sm *ServiceManager) Reload() error {
 	switch sm.Init {
 	case Systemd:
-		out, err := exec.Command("systemctl", "--user", "restart", "fcitx5-lotus-server.service").CombinedOutput()
+		u, _ := user.Current()
+		out, err := exec.Command("sudo", "systemctl", "restart", "fcitx5-lotus-server@"+u.Username+".service").CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("systemctl restart failed: %s", string(out))
 		}

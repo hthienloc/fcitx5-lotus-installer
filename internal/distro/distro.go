@@ -84,15 +84,15 @@ func Detect() (DistroInfo, error) {
 
 func classifyDistro(id string) DistroType {
 	switch {
-	case id == "arch", id == "archarm", id == "endeavouros", id == "manjaro", id == "cachyos":
+	case id == "arch", id == "archarm", id == "endeavouros", id == "manjaro", id == "cachyos", id == "garuda":
 		return Arch
-	case id == "debian", id == "linuxmint":
+	case id == "debian", id == "linuxmint", id == "kali", id == "parrot", id == "sparky":
 		return Debian
-	case id == "ubuntu", id == "pop", id == "neon":
+	case id == "ubuntu", id == "pop", id == "neon", id == "zorin", id == "elementary", id == "linuxmint" && strings.Contains(id, "debian") == false:
 		return Ubuntu
-	case id == "fedora", id == "nobara":
+	case id == "fedora", id == "nobara", id == "rhel", id == "centos", id == "almalinux", id == "rocky":
 		return Fedora
-	case strings.HasPrefix(id, "opensuse"):
+	case strings.HasPrefix(id, "opensuse") || id == "suse":
 		return OpenSUSE
 	case id == "nixos":
 		return NixOS

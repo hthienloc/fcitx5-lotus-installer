@@ -13,6 +13,7 @@ import (
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/build"
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/configure"
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/distro"
+	"github.com/hthienloc/fcitx5-lotus-installer/internal/packages"
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/repo"
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/services"
 )
@@ -452,6 +453,15 @@ func main() {
 	}
 
 	if installMethod == "source" {
+		if confirm("\n  Install build dependencies") {
+			deps := packages.AllDeps(d.Type)
+			if err := packages.InstallPackages(deps, d); err != nil {
+				warn("Failed to install some dependencies. Continuing anyway...")
+			} else {
+				ok("Build dependencies installed.")
+			}
+		}
+
 		if !confirm("\n  Clone and build fcitx5-lotus") {
 			fmt.Println("\n  " + dim + "Aborted." + reset)
 			os.Exit(0)
