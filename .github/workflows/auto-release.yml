@@ -17,6 +17,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get next version
+        id: version
+        run: |
+          # Get latest release tag
+          LATEST=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "")
+
+          if [[ -z "$LATEST" || "$LATEST" == "null" || "$LATEST" == "latest" ]]; then
+            LATEST="v0.0.0"
+          fi
+
+          # Remove 'v' prefix
+          VERSION_NUM="${LATEST#v}"
+
+          # Parse version
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NUM"
+          MAJOR=${MAJOR:-0}
+          MINOR=${MINOR:-0}
+          PATCH=${PATCH:-0}
+
+          # Increment patch
+          PATCH=$((PATCH + 1))
+
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - uses: actions/setup-go@v5
         with:
@@ -34,17 +64,16 @@ jobs:
           GOARCH: arm64
         run: go build -o lotus-installer-linux-arm64 ./cmd/installer/
       
-      - name: Create/Update Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: latest
-          release_name: "Latest Build"
+          tag_name: ${{ steps.version.outputs.new_version }}
+          release_name: "Release ${{ steps.version.outputs.new_version }}"
           body: |
-            Automated build from `main`
+            Automated release from `main`
             Commit: `${{ github.sha }}`
           files: |
             lotus-installer-linux-amd64
             lotus-installer-linux-arm64
-          overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
