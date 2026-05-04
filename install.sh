@@ -37,16 +37,14 @@ esac
 printf "${LOTUS_GREEN}Detecting system...${NC} %s (%s)\n\n" "$(uname -o 2>/dev/null || echo Linux)" "$ARCH"
 
 # Try to download pre-built binary first
-LATEST_VERSION=$(curl -sf https://api.github.com/repos/hthienloc/fcitx5-lotus-installer/releases/latest 2>/dev/null | grep -o '"tag_name": *"[^"]*"' | head -1 | cut -d'"' -f4)
+LATEST_VERSION="latest"
 
-if [ -n "$LATEST_VERSION" ]; then
-    printf "${LOTUS_GREEN}Found release ${BOLD}%s${NC}\n" "$LATEST_VERSION"
-    printf "${LOTUS_GREEN}Downloading installer...${NC}\n\n"
+printf "${LOTUS_GREEN}Downloading latest installer...${NC}\n\n"
 
-    TEMP_DIR=$(mktemp -d)
-    cd "$TEMP_DIR"
+TEMP_DIR=$(mktemp -d)
+cd "$TEMP_DIR"
 
-    curl -sfL "https://github.com/hthienloc/fcitx5-lotus-installer/releases/download/$LATEST_VERSION/lotus-installer-linux-$BIN_ARCH" -o lotus-installer 2>/dev/null
+curl -sfL "https://github.com/hthienloc/fcitx5-lotus-installer/releases/download/$LATEST_VERSION/lotus-installer-linux-$BIN_ARCH" -o lotus-installer 2>/dev/null
 
     if [ -f lotus-installer ]; then
         chmod +x lotus-installer
@@ -58,7 +56,7 @@ if [ -n "$LATEST_VERSION" ]; then
 
     cd - >/dev/null
     rm -rf "$TEMP_DIR"
-    printf "${LOTUS_PURPLE}No pre-built binary for %s, building from source...${NC}\n\n" "$BIN_ARCH"
+    printf "${LOTUS_PURPLE}Download failed, building from source...${NC}\n\n"
 fi
 
 # Fallback: build from source
