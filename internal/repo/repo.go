@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hthienloc/fcitx5-lotus-installer/internal/distro"
+	"github.com/hthienloc/fcitx5-lotus-installer/internal/ui"
 )
 
 const (
@@ -51,7 +52,8 @@ func installApt(d distro.DistroInfo) error {
 		return fmt.Errorf("cannot detect codename")
 	}
 
-	fmt.Println("  Adding fcitx5-lotus repository...")
+	spinner := ui.NewSpinner("Adding fcitx5-lotus repository...")
+	spinner.Start()
 
 	cmds := [][]string{
 		{"sudo", "mkdir", "-p", "/etc/apt/keyrings"},
@@ -64,15 +66,18 @@ func installApt(d distro.DistroInfo) error {
 	for i, args := range cmds {
 		out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 		if err != nil {
+			spinner.Stop(false)
 			return fmt.Errorf("step %d failed: %s\n%s", i+1, err, string(out))
 		}
 	}
 
+	spinner.Stop(true)
 	return nil
 }
 
 func installDnf(d distro.DistroInfo) error {
-	fmt.Println("  Adding fcitx5-lotus repository...")
+	spinner := ui.NewSpinner("Adding fcitx5-lotus repository...")
+	spinner.Start()
 
 	repoFile := fmt.Sprintf("fcitx5-lotus-%s.repo", d.Version)
 	repoURL := fmt.Sprintf("%s/rpm/fedora/%s", baseURL, repoFile)
@@ -93,15 +98,18 @@ func installDnf(d distro.DistroInfo) error {
 	for i, args := range cmds {
 		out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 		if err != nil {
+			spinner.Stop(false)
 			return fmt.Errorf("step %d failed: %s\n%s", i+1, err, string(out))
 		}
 	}
 
+	spinner.Stop(true)
 	return nil
 }
 
 func installZypper(d distro.DistroInfo) error {
-	fmt.Println("  Adding fcitx5-lotus repository...")
+	spinner := ui.NewSpinner("Adding fcitx5-lotus repository...")
+	spinner.Start()
 
 	cmds := [][]string{
 		{"bash", "-c", fmt.Sprintf("sudo rpm --import %s", pubKeyURL)},
@@ -113,15 +121,18 @@ func installZypper(d distro.DistroInfo) error {
 	for i, args := range cmds {
 		out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 		if err != nil {
+			spinner.Stop(false)
 			return fmt.Errorf("step %d failed: %s\n%s", i+1, err, string(out))
 		}
 	}
 
+	spinner.Stop(true)
 	return nil
 }
 
 func installAur() error {
-	fmt.Println("  Installing via AUR helper...")
+	spinner := ui.NewSpinner("Installing via AUR helper...")
+	spinner.Start()
 
 	helpers := [][]string{
 		{"yay", "-S", "--noconfirm", "fcitx5-lotus-bin"},
@@ -132,11 +143,14 @@ func installAur() error {
 		if _, err := exec.LookPath(args[0]); err == nil {
 			out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 			if err != nil {
+				spinner.Stop(false)
 				return fmt.Errorf("%s failed: %s\n%s", args[0], err, string(out))
 			}
+			spinner.Stop(true)
 			return nil
 		}
 	}
 
+	spinner.Stop(false)
 	return fmt.Errorf("no AUR helper found (yay or paru required)")
 }
