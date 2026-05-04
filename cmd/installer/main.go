@@ -25,7 +25,7 @@ const (
 	lotusPink    = "\033[38;5;219m" // Soft pink petal
 	lotusDeepPink = "\033[38;5;198m" // Deep pink center
 	lotusPurple  = "\033[38;5;147m" // Light purple lotus
-	lotusGreen   = "\033[38;5;150m" // Lotus leaf lotusGreen
+	lotusGreen   = "\033[38;5;150m" // Lotus leaf green
 	cyan         = "\033[36m"
 	red          = "\033[31m"
 )
@@ -648,9 +648,9 @@ func main() {
 	}
 
 	fmt.Println()
-	fmt.Println(bold + lotusPink + "  ╭──────────────────────────────────────────╮" + reset)
-	fmt.Println(bold + lotusPink + "  │           ✅  Installation Done!          │" + reset)
-	fmt.Println(bold + lotusPink + "  ╰──────────────────────────────────────────╯" + reset)
+	fmt.Println()
+	fmt.Println(bold + lotusPink + "  ✅  Installation Complete!" + reset)
+	fmt.Println()
 	fmt.Println()
 
 	if session == "Wayland" {
