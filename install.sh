@@ -2,26 +2,27 @@
 
 set -e
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
+# Lotus Color Scheme (Lotus Petal Colors)
+LOTUS_PINK='\033[38;5;219m'      # Soft pink petal
+LOTUS_DEEP_PINK='\033[38;5;198m'  # Deep pink center
+LOTUS_PURPLE='\033[38;5;147m'     # Light purple lotus
+LOTUS_GREEN='\033[38;5;150m'      # Lotus leaf green
 BOLD='\033[1m'
 NC='\033[0m'
 
-printf "\n${BOLD}${BLUE}  🪷  fcitx5-lotus Installer${NC}\n"
-printf "${BLUE}  ───────────────────────────────${NC}\n\n"
+printf "\n${BOLD}${LOTUS_PINK}  🪷  fcitx5-lotus Installer${NC}\n"
+printf "${LOTUS_PINK}  ───────────────────────────────${NC}\n\n"
 
 # Root check
 if [ "$(id -u)" = "0" ]; then
-    printf "${RED}Error: Do not run as root.${NC}\n"
+    printf "${LOTUS_DEEP_PINK}Error: Do not run as root.${NC}\n"
     echo "The installer will ask for sudo when needed."
     exit 1
 fi
 
 # Linux check
 if [ "$(uname)" != "Linux" ]; then
-    printf "${RED}Error: This installer only supports Linux.${NC}\n"
+    printf "${LOTUS_DEEP_PINK}Error: This installer only supports Linux.${NC}\n"
     exit 1
 fi
 
@@ -30,17 +31,17 @@ ARCH=$(uname -m)
 case "$ARCH" in
     x86_64)  BIN_ARCH="amd64" ;;
     aarch64) BIN_ARCH="arm64" ;;
-    *) printf "${RED}Unsupported architecture: %s${NC}\n" "$ARCH"; exit 1 ;;
+    *)     printf "${LOTUS_DEEP_PINK}Unsupported architecture: %s${NC}\n" "$ARCH"; exit 1 ;;
 esac
 
-printf "${GREEN}Detecting system...${NC} %s (%s)\n\n" "$(uname -o 2>/dev/null || echo Linux)" "$ARCH"
+printf "${LOTUS_GREEN}Detecting system...${NC} %s (%s)\n\n" "$(uname -o 2>/dev/null || echo Linux)" "$ARCH"
 
 # Try to download pre-built binary first
 LATEST_VERSION=$(curl -sf https://api.github.com/repos/hthienloc/fcitx5-lotus-installer/releases/latest 2>/dev/null | grep -o '"tag_name": *"[^"]*"' | head -1 | cut -d'"' -f4)
 
 if [ -n "$LATEST_VERSION" ]; then
-    printf "${GREEN}Found release ${BOLD}%s${NC}\n" "$LATEST_VERSION"
-    printf "${GREEN}Downloading installer...${NC}\n\n"
+    printf "${LOTUS_GREEN}Found release ${BOLD}%s${NC}\n" "$LATEST_VERSION"
+    printf "${LOTUS_GREEN}Downloading installer...${NC}\n\n"
 
     TEMP_DIR=$(mktemp -d)
     cd "$TEMP_DIR"
@@ -57,17 +58,17 @@ if [ -n "$LATEST_VERSION" ]; then
 
     cd - >/dev/null
     rm -rf "$TEMP_DIR"
-    printf "${YELLOW}No pre-built binary for %s, building from source...${NC}\n\n" "$BIN_ARCH"
+    printf "${LOTUS_PURPLE}No pre-built binary for %s, building from source...${NC}\n\n" "$BIN_ARCH"
 fi
 
 # Fallback: build from source
 if ! command -v go &> /dev/null; then
-    printf "${RED}Error: Go is required to build the installer.${NC}\n"
+    printf "${LOTUS_DEEP_PINK}Error: Go is required to build the installer.${NC}\n"
     echo "Install Go or download a pre-built binary from GitHub releases."
     exit 1
 fi
 
-printf "${GREEN}Go found. Building installer...${NC}\n\n"
+printf "${LOTUS_GREEN}Go found. Building installer...${NC}\n\n"
 
 TEMP_DIR=$(mktemp -d)
 cd "$TEMP_DIR"

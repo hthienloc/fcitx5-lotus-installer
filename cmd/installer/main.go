@@ -19,20 +19,20 @@ import (
 )
 
 const (
-	reset   = "\033[0m"
-	bold    = "\033[1m"
-	dim     = "\033[2m"
-	green   = "\033[32m"
-	yellow  = "\033[33m"
-	blue    = "\033[34m"
-	magenta = "\033[35m"
-	cyan    = "\033[36m"
-	red     = "\033[31m"
+	reset        = "\033[0m"
+	bold         = "\033[1m"
+	dim          = "\033[2m"
+	lotusPink    = "\033[38;5;219m" // Soft pink petal
+	lotusDeepPink = "\033[38;5;198m" // Deep pink center
+	lotusPurple  = "\033[38;5;147m" // Light purple lotus
+	lotusGreen   = "\033[38;5;150m" // Lotus leaf green
+	cyan         = "\033[36m"
+	red          = "\033[31m"
 )
 
 func banner() {
 	fmt.Println()
-	fmt.Println(bold + magenta + "  🪷  fcitx5-lotus Installer" + reset)
+	fmt.Println(bold + lotusPink + "  🪷  fcitx5-lotus Installer" + reset)
 	fmt.Println(dim + "  ──────────────────────────" + reset)
 	fmt.Println()
 }
@@ -47,15 +47,15 @@ func step(num int, title string) {
 }
 
 func ok(msg string) {
-	fmt.Println("  " + green + "✓" + reset + " " + msg)
+	fmt.Println("  " + lotusGreen + "✓" + reset + " " + msg)
 }
 
 func warn(msg string) {
-	fmt.Println("  " + yellow + "!" + reset + " " + msg)
+	fmt.Println("  " + lotusPurple + "!" + reset + " " + msg)
 }
 
 func fail(msg string) {
-	fmt.Println("  " + red + "✗" + reset + " " + msg)
+	fmt.Println("  " + lotusDeepPink + "✗" + reset + " " + msg)
 }
 
 func info(msg string) {
@@ -269,9 +269,9 @@ func ctx(d distro.DistroInfo, initSys, shell, session, de, step string) map[stri
 
 func die(msg string, err error, c map[string]string) {
 	fmt.Println()
-	fmt.Println(bold + red + "  ✗  " + msg + reset)
+	fmt.Println(bold + lotusDeepPink + "  ✗  " + msg + reset)
 	if err != nil {
-		fmt.Println("  " + red + err.Error() + reset)
+		fmt.Println("  " + lotusDeepPink + err.Error() + reset)
 	}
 	fmt.Println()
 	fmt.Println(dim + "  ── Debug Info ──" + reset)
@@ -293,7 +293,7 @@ func die(msg string, err error, c map[string]string) {
 
 func main() {
 	if os.Geteuid() == 0 {
-		fmt.Println(red + bold + "  Error:" + reset + red + " Do not run as root." + reset)
+		fmt.Println(lotusDeepPink + bold + "  Error:" + reset + lotusDeepPink + " Do not run as root." + reset)
 		os.Exit(1)
 	}
 
@@ -320,7 +320,7 @@ func main() {
 	session := detectSession()
 	de := ""
 
-	fmt.Println(bold + cyan + "  System Detected" + reset)
+	fmt.Println(bold + lotusPurple + "  System Detected" + reset)
 	infoLine("OS:", d.Name+" "+d.Version)
 	infoLine("Init:", initSys)
 	infoLine("Shell:", shell)
@@ -648,9 +648,9 @@ func main() {
 	}
 
 	fmt.Println()
-	fmt.Println(bold + magenta + "  ╭──────────────────────────────────────────╮" + reset)
-	fmt.Println(bold + magenta + "  │           ✅  Installation Done!          │" + reset)
-	fmt.Println(bold + magenta + "  ╰──────────────────────────────────────────╯" + reset)
+	fmt.Println(bold + lotusPink + "  ╭──────────────────────────────────────────╮" + reset)
+	fmt.Println(bold + lotusPink + "  │           ✅  Installation Done!          │" + reset)
+	fmt.Println(bold + lotusPink + "  ╰──────────────────────────────────────────╯" + reset)
 	fmt.Println()
 
 	if session == "Wayland" {
@@ -670,7 +670,7 @@ func main() {
 	fmt.Println("  Docs: " + bold + "https://lotusinputmethod.github.io/" + reset)
 	fmt.Println()
 
-	fmt.Println(yellow + "  Note: Some environment changes require a logout or reboot to take effect." + reset)
+	fmt.Println(lotusPurple + "  Note: Some environment changes require a logout or reboot to take effect." + reset)
 	if confirm("Reboot system now") {
 		fmt.Println()
 		fmt.Println("  " + dim + "Rebooting..." + reset)
