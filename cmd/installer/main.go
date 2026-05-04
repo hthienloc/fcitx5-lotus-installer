@@ -25,7 +25,7 @@ const (
 	lotusPink    = "\033[38;5;219m" // Soft pink petal
 	lotusDeepPink = "\033[38;5;198m" // Deep pink center
 	lotusPurple  = "\033[38;5;147m" // Light purple lotus
-	lotusGreen   = "\033[38;5;150m" // Lotus leaf green
+	lotusGreen   = "\033[38;5;150m" // Lotus leaf lotusGreen
 	cyan         = "\033[36m"
 	red          = "\033[31m"
 )
@@ -480,28 +480,28 @@ func main() {
 			fmt.Println(red + "failed" + reset)
 			die("Clone failed", err, c)
 		}
-		fmt.Println(green + "done" + reset)
+		fmt.Println(lotusGreen + "done" + reset)
 
 		fmt.Print("  " + dim + "Configuring cmake... " + reset)
 		if err := b.Configure(); err != nil {
 			fmt.Println(red + "failed" + reset)
 			die("CMake configure failed", err, c)
 		}
-		fmt.Println(green + "done" + reset)
+		fmt.Println(lotusGreen + "done" + reset)
 
 		fmt.Print("  " + dim + "Building... " + reset)
 		if err := b.Build(); err != nil {
 			fmt.Println(red + "failed" + reset)
 			die("Build failed", err, c)
 		}
-		fmt.Println(green + "done" + reset)
+		fmt.Println(lotusGreen + "done" + reset)
 
 		fmt.Print("  " + dim + "Installing to system... " + reset)
 		if err := b.Install(); err != nil {
 			fmt.Println(red + "failed" + reset)
 			die("Install failed", err, c)
 		}
-		fmt.Println(green + "done" + reset)
+		fmt.Println(lotusGreen + "done" + reset)
 	}
 
 	pause()
@@ -541,35 +541,35 @@ func main() {
 
 		fmt.Print("  " + dim + "Creating uinput_proxy user... " + reset)
 		if err := sm.CreateUserAndGroup(); err != nil {
-			fmt.Println(yellow + "skip" + reset)
+			fmt.Println(lotusPurple + "skip" + reset)
 		} else {
-			fmt.Println(green + "done" + reset)
+			fmt.Println(lotusGreen + "done" + reset)
 		}
 
 		fmt.Print("  " + dim + "Reloading udev rules... " + reset)
 		if err := sm.ReloadUdev(); err != nil {
-			fmt.Println(yellow + "skip" + reset)
+			fmt.Println(lotusPurple + "skip" + reset)
 		} else {
-			fmt.Println(green + "done" + reset)
+			fmt.Println(lotusGreen + "done" + reset)
 		}
 
 		fmt.Print("  " + dim + "Loading uinput module... " + reset)
 		if err := sm.ModprobeUinput(); err != nil {
-			fmt.Println(yellow + "skip" + reset)
+			fmt.Println(lotusPurple + "skip" + reset)
 		} else {
-			fmt.Println(green + "done" + reset)
+			fmt.Println(lotusGreen + "done" + reset)
 		}
 
 		fmt.Print("  " + dim + "Activating server... " + reset)
 		if err := sm.ActivateServer(); err != nil {
-			fmt.Println(yellow + "skip" + reset)
+			fmt.Println(lotusPurple + "skip" + reset)
 		} else {
-			fmt.Println(green + "done" + reset)
+			fmt.Println(lotusGreen + "done" + reset)
 		}
 
 		fmt.Print("  " + dim + "Killing IBus... " + reset)
 		sm.KillIBus()
-		fmt.Println(green + "done" + reset)
+		fmt.Println(lotusGreen + "done" + reset)
 	}
 
 	pause()
@@ -596,30 +596,30 @@ func main() {
 		} else {
 			fmt.Print("  " + dim + "Setting up environment.d... " + reset)
 			if err := cfg.SetupEnvironmentD(); err != nil {
-				fmt.Println(yellow + "skip" + reset)
+				fmt.Println(lotusPurple + "skip" + reset)
 			} else {
-				fmt.Println(green + "done" + reset)
+				fmt.Println(lotusGreen + "done" + reset)
 			}
 
 			fmt.Print("  " + dim + "Writing shell profile... " + reset)
 			if err := cfg.SetupShellProfile(); err != nil {
-				fmt.Println(yellow + "skip" + reset)
+				fmt.Println(lotusPurple + "skip" + reset)
 			} else {
-				fmt.Println(green + "done" + reset)
+				fmt.Println(lotusGreen + "done" + reset)
 			}
 
 			fmt.Print("  " + dim + "Creating fcitx5 profile... " + reset)
 			if err := cfg.SetupFcitx5Profile(); err != nil {
-				fmt.Println(yellow + "skip" + reset)
+				fmt.Println(lotusPurple + "skip" + reset)
 			} else {
-				fmt.Println(green + "done" + reset)
+				fmt.Println(lotusGreen + "done" + reset)
 			}
 
 			fmt.Print("  " + dim + "Setting up autostart... " + reset)
 			if err := cfg.SetupAutostart(); err != nil {
-				fmt.Println(yellow + "skip" + reset)
+				fmt.Println(lotusPurple + "skip" + reset)
 			} else {
-				fmt.Println(green + "done" + reset)
+				fmt.Println(lotusGreen + "done" + reset)
 			}
 		}
 	}
